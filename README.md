@@ -11,7 +11,7 @@ Repositorio para el uso durante el cursado de la materia Ingeniería y Calidad d
   * Figueroa Lopez Tomas
   * Pedotti Alan  
   * Maidana Gonzalo
-  * Eli Dapuez
+  * Eliseo Dapuez
     
 ##  [Documento de Gestion de Configuración De Software](----)
 
@@ -51,5 +51,6 @@ Fechas:
 | `<APELLIDO_INTEGRANTE>`   | Apellido del integrante que ha realizado el parcial o recuperatorio. |
 | `<NOMBRE_TIG>`            | Nombre del Trabajo de Investigación Grupal.                          |
 | `<N_PARCIAL>`             | Número entero del parcial que se ha recuperado en dos dígitos.       |
+
 
 
