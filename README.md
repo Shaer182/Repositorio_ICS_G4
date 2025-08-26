@@ -4,7 +4,7 @@ Repositorio para el uso durante el cursado de la materia Ingeniería y Calidad d
 ### Integrantes:
   * Mansilla Benjamin Felipe
   * Aquere Agustin
-  * Corso Mirco
+  * Corzo Mirco
   * Carle Lucas
   * Sander Juan Ignacio
   * Ottonello Mateo
@@ -51,6 +51,7 @@ Fechas:
 | `<APELLIDO_INTEGRANTE>`   | Apellido del integrante que ha realizado el parcial o recuperatorio. |
 | `<NOMBRE_TIG>`            | Nombre del Trabajo de Investigación Grupal.                          |
 | `<N_PARCIAL>`             | Número entero del parcial que se ha recuperado en dos dígitos.       |
+
 
 
 
