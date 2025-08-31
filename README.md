@@ -21,6 +21,7 @@ Repositorio para el uso durante el cursado de la materia Ingeniería y Calidad d
 
 | **Nombre del Ítem de Configuración**                       | **Regla de Nombrado**                                       | **Ubicación Física**                                                      |
 |------------------------------------------------------------|-------------------------------------------------------------|---------------------------------------------------------------------------|
+| Plan de gestión de configuración de software               | `Plan_gestion_configuracion_software.pdf`                   | `/Repositorio_ICS_G4 `                                                    |  
 | Bibliografía                                               | `<NOMBRE_BLI>.pdf`                                          | `/Repositorio_ICS_G4/Material/Bibliografía`                               |
 | Presentaciones de Clase                                    | `<N>_<TEMA>.pdf`                                            | `/Repositorio_ICS_G4/Material/PresentacionesDeClase`                      |
 | Clases Grabadas                                            | `Clases_Grabadas.xslx`                                      | `/Repositorio_ICS_G4/Material`                                            |
@@ -33,12 +34,12 @@ Repositorio para el uso durante el cursado de la materia Ingeniería y Calidad d
 
 
 ## Líneas Base
-Estableceremos las líneas bases considerando la fecha de los parciales, el criterio definido será marcar una línea base el primer día habil luego del examen. De esta forma aseguramos que el repositorio refleje el progreso en relación con los contenidos y habilidades adquiridas hasta esos momentos.
+La primera línea base se realizará en el cierre de la entrega del primer trabajo práctico evaluable, luego estableceremos las líneas bases considerando la fecha de los parciales, el criterio definido será marcar una línea base el primer día habil luego del examen. De esta forma aseguramos que el repositorio refleje el progreso en relación con los contenidos y habilidades adquiridas hasta esos momentos.
 
 Fechas:
- * 
- * 
- * 
+ * 02/07/25 - Cierre entrega primer TP evaluable
+ * 29/09/25 - Primer Parcial
+ * 10/11/25 - Segundo Parcial
 
 
 ## Glosario
