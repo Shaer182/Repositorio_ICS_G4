@@ -13,7 +13,7 @@ Repositorio para el uso durante el cursado de la materia Ingeniería y Calidad d
   * Maidana Gonzalo
   * Eliseo Dapuez
     
-##  [Documento de Gestion de Configuración De Software](https://github.com/Shaer182/Repositorio_ICS_G4/blob/8534e12d3e231885ff8cb745b29f017c1d0c7e2a/Trabajos%20Practicos/TrabajosPracticosEvaluables/Plan%20de%20gesti%C3%B3n%20de%20configuraci%C3%B3n%20de%20software%20-%20G4.pdf))
+##  [Documento de Gestion de Configuración De Software](https://github.com/Shaer182/Repositorio_ICS_G4/blob/8534e12d3e231885ff8cb745b29f017c1d0c7e2a/Trabajos%20Practicos/TrabajosPracticosEvaluables/Plan%20de%20gesti%C3%B3n%20de%20configuraci%C3%B3n%20de%20software%20-%20G4.pdf)
 
  
 
@@ -52,6 +52,7 @@ Fechas:
 | `<APELLIDO_INTEGRANTE>`   | Apellido del integrante que ha realizado el parcial o recuperatorio. |
 | `<NOMBRE_TIG>`            | Nombre del Trabajo de Investigación Grupal.                          |
 | `<N_PARCIAL>`             | Número entero del parcial que se ha recuperado en dos dígitos.       |
+
 
 
 
