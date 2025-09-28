@@ -28,9 +28,6 @@ Repositorio para el uso durante el cursado de la materia Ingeniería y Calidad d
 | Trabajo Grupal Evaluable                                   | `TP_<N>_<NOMBRE_TP>_G4.<ext_tp>`                                                | `/Repositorio_ICS_G4/Trabajos_Practicos/Trabajos_Evaluables/TP_<N>`       |
 | Trabajo de investigación                                   | `<NOMBRE_TIG>.pdf`                                          | `/Repositorio_ICS_G4/Trabajos_Practicos/Trabajos_Investigación/<NOMBRE_TIG>`       |
 | Programa Asignatura                                        | `Programa_Asignatura_2025.pdf`                               | `/Repositorio_ICS_G4 `                                                    |
-| Trabajo Grupal No Evaluable                                | `TP_<N>.pdf`                                                | `/Repositorio_ICS_G4/TrabajosPracticos/TrabajosPracticosNoEvaluables/TP_<N>  `   |
-| Parciales                                                  | `Parcial_<N>_<APELLIDO_INTEGRANTE>.pdf`                     | `/Repositorio_ICS_G4/Parciales  `                                         |
-| Recuperatorio                                              | `Recuperatorio_<N_PARCIAL>_<APELLIDO_INTEGRANTE>.pdf`       | `/Repositorio_ICS_G4/Parciales  `                                         |
 
 
 ## Líneas Base
@@ -51,7 +48,7 @@ Fechas:
 | `<TEMA>`                  | Nombre que indica el tema abordado en la presentación .              |
 | `<APELLIDO_INTEGRANTE>`   | Apellido del integrante que ha realizado el parcial o recuperatorio. |
 | `<NOMBRE_TIG>`            | Nombre del Trabajo de Investigación Grupal.                          |
-| `<N_PARCIAL>`             | Número entero del parcial que se ha recuperado en dos dígitos.       |
+| `<ext_tp>`                | Extensión del trabajo práctico. Los valores permitidos son PDF y DOCX. |
 
 
 
