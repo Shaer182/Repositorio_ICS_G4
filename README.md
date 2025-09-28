@@ -23,11 +23,11 @@ Repositorio para el uso durante el cursado de la materia Ingeniería y Calidad d
 |------------------------------------------------------------|-------------------------------------------------------------|---------------------------------------------------------------------------|
 | Plan de gestión de configuración de software               | `Plan_gestion_configuracion_software.pdf`                   | `/Repositorio_ICS_G4 `                                                    |  
 | Bibliografía                                               | `<NOMBRE_BLI>.pdf`                                          | `/Repositorio_ICS_G4/Material/Bibliografía`                               |
-| Presentaciones de Clase                                    | `<N>_<TEMA>.pdf`                                            | `/Repositorio_ICS_G4/Material/PresentacionesDeClase`                      |
+| Presentaciones de Clase                                    | `<N>_<TEMA>.pdf`                                            | `/Repositorio_ICS_G4/Material/Presentaciones_Clase`                      |
 | Clases Grabadas                                            | `Clases_Grabadas.xslx`                                      | `/Repositorio_ICS_G4/Material`                                            |
-| Trabajo Grupal Evaluable                                   | `TP_<N>.pdf`                                                | `/Repositorio_ICS_G4/TrabajosPracticos/TrabajosPracticosEvaluables/TP_<N>`       |
-| Trabajo de investigación                                   | `<NOMBRE_TIG>.pdf`                                          | `/Repositorio_ICS_G4/TrabajosPracticos/<NOMBRE_TIG>`       |
-| Programa Asignatura                                        | `ProgramaAsignatura_2025.pdf`                               | `/Repositorio_ICS_G4 `                                                    |
+| Trabajo Grupal Evaluable                                   | `TP_<N>_<NOMBRE_TP>_G4.<ext_tp>`                                                | `/Repositorio_ICS_G4/Trabajos_Practicos/Trabajos_Evaluables/TP_<N>`       |
+| Trabajo de investigación                                   | `<NOMBRE_TIG>.pdf`                                          | `/Repositorio_ICS_G4/Trabajos_Practicos/Trabajos_Investigación/<NOMBRE_TIG>`       |
+| Programa Asignatura                                        | `Programa_Asignatura_2025.pdf`                               | `/Repositorio_ICS_G4 `                                                    |
 | Trabajo Grupal No Evaluable                                | `TP_<N>.pdf`                                                | `/Repositorio_ICS_G4/TrabajosPracticos/TrabajosPracticosNoEvaluables/TP_<N>  `   |
 | Parciales                                                  | `Parcial_<N>_<APELLIDO_INTEGRANTE>.pdf`                     | `/Repositorio_ICS_G4/Parciales  `                                         |
 | Recuperatorio                                              | `Recuperatorio_<N_PARCIAL>_<APELLIDO_INTEGRANTE>.pdf`       | `/Repositorio_ICS_G4/Parciales  `                                         |
