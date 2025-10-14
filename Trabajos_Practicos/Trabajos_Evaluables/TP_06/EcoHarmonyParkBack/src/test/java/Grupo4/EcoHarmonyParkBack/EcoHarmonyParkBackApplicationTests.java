@@ -7,8 +7,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.util.Collections;
+import java.util.List;
+import Grupo4.EcoHarmonyParkBack.entities.Visitante;
 import Grupo4.EcoHarmonyParkBack.repositories.InscripcionRepository;
 import Grupo4.EcoHarmonyParkBack.services.InscripcionService;
+import net.bytebuddy.description.annotation.AnnotationList.Empty;
 
 @SpringBootTest
 class EcoHarmonyParkBackApplicationTests {
@@ -26,7 +30,12 @@ class EcoHarmonyParkBackApplicationTests {
 	@Test
 	void testInscripcionCorrecta() {
 
-		int resultado = inscripcionService.inscribirActividad(null);
+		List<Visitante> visitantes = List.of(
+				new Visitante("Juan Perez", "12345678", 30, "M"),
+				new Visitante("Maria Gomez", "87654321", 25, "S")
+		);
+
+		int resultado = inscripcionService.inscribirActividad(visitantes, 1L, true	);
 
 		try {
 			assertEquals(0, resultado);
@@ -39,8 +48,12 @@ class EcoHarmonyParkBackApplicationTests {
 
 	@Test
 	void testInscripcionDuplicada() {
+		
+		List<Visitante> visitantes = List.of(
+				new Visitante("Juan Perez", "12345678", 30, "M")
+		);
 
-		int resultado = inscripcionService.inscribirActividad(null);
+		int resultado = inscripcionService.inscribirActividad(visitantes, 1L, true);
 
 		try {
 			assertEquals(1, resultado);
@@ -54,7 +67,11 @@ class EcoHarmonyParkBackApplicationTests {
 	@Test
 	void testInscripcionDatosFaltantes() {
 		
-		int resultado = inscripcionService.inscribirActividad(null);
+		List<Visitante> visitantes = List.of(
+				new Visitante("Juan Perez", "12345678", 30, "M")
+		);
+
+		int resultado = inscripcionService.inscribirActividad(visitantes, 1L, true);
 
 		try {
 			assertEquals(2, resultado);
@@ -67,7 +84,12 @@ class EcoHarmonyParkBackApplicationTests {
 
 	@Test
 	void testInscripcionCupoExcedido() {
-		int resultado = inscripcionService.inscribirActividad(null);
+
+		List<Visitante> visitantes = List.of(
+				new Visitante("Juan Perez", "12345678", 30, "M")
+		);
+
+		int resultado = inscripcionService.inscribirActividad(visitantes, 1L, true);
 
 		try {
 			assertEquals(3, resultado);
@@ -81,7 +103,11 @@ class EcoHarmonyParkBackApplicationTests {
 	@Test
 	void testInscripcionSinTyC() {
 		
-		int resultado = inscripcionService.inscribirActividad(null);
+		List<Visitante> visitantes = List.of(
+				new Visitante("Juan Perez", "12345678", 30, "M")
+		);
+
+		int resultado = inscripcionService.inscribirActividad(visitantes, 1L, false);
 
 		try {
 			assertEquals(4, resultado);
@@ -95,7 +121,11 @@ class EcoHarmonyParkBackApplicationTests {
 	@Test
 	void testInscripcionMenorEdad() {
 		
-		int resultado = inscripcionService.inscribirActividad(null);
+		List<Visitante> visitantes = List.of(
+				new Visitante("Juan Perez", "12345678", 10, "M")
+		);
+
+		int resultado = inscripcionService.inscribirActividad(visitantes, 1L, true);
 
 		try {
 			assertEquals(5, resultado);
@@ -108,7 +138,11 @@ class EcoHarmonyParkBackApplicationTests {
 	@Test
 	void testInscripcionSinTalle() {
 		
-		int resultado = inscripcionService.inscribirActividad(null);
+		List<Visitante> visitantes = List.of(
+				new Visitante("Juan Perez", "12345678", 30, null)
+		);
+
+		int resultado = inscripcionService.inscribirActividad(visitantes, 1L, true);
 
 		try {
 			assertEquals(6, resultado);

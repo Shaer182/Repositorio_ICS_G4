@@ -1,9 +1,9 @@
 package Grupo4.EcoHarmonyParkBack.services;
 
-import Grupo4.EcoHarmonyParkBack.dtos.InscripcionRequest;
 import Grupo4.EcoHarmonyParkBack.entities.Actividad;
 import Grupo4.EcoHarmonyParkBack.entities.HorarioActividad;
 import Grupo4.EcoHarmonyParkBack.entities.Inscripcion;
+import Grupo4.EcoHarmonyParkBack.entities.Visitante;
 import Grupo4.EcoHarmonyParkBack.repositories.InscripcionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,7 +20,7 @@ public class InscripcionService {
         return inscripcionRepository.findAll();
     }
 
-    public int inscribirActividad(InscripcionRequest request){
+    public int inscribirActividad(List<Visitante> visitantes, Long horarioActividadId, Boolean aceptaTyC) {
         return -1;
     }
 

@@ -33,4 +33,11 @@ public class Visitante {
 
     @OneToMany(mappedBy = "visitante", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Grupo> grupos;
+
+    public Visitante(String nombre, String dni, int edad, String tallaVestimenta) {
+        this.nombre = nombre;
+        this.dni = dni;
+        this.edad = edad;
+        this.tallaVestimenta = tallaVestimenta;
+    }
 }
