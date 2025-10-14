@@ -10,4 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class HorarioResponse {
+    private Long id;
+    private String horaApertura;
+    private String horaCierre;
 }

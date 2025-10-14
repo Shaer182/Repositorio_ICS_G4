@@ -10,4 +10,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class InscripcionResponse {
+    private Long id;
+    private String mensaje;
 }

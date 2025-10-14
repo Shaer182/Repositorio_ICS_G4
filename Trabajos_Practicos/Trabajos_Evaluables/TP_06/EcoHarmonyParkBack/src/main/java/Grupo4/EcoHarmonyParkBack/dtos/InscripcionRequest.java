@@ -10,4 +10,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class InscripcionRequest {
+    private Long id;
+    private String nombreCompleto;
+    private String email;
+    private String telefono;
+    private Long eventoId;
+    private Boolean aceptaTyC;
 }
