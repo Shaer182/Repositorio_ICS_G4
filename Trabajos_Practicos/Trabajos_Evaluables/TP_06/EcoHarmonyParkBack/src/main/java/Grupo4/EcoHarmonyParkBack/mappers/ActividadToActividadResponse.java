@@ -14,6 +14,8 @@ public class ActividadToActividadResponse implements Function<Actividad, Activid
                 .descripcion(actividad.getDescripcion())
                 .cupoMaximo(actividad.getCupoMaximo())
                 .requiereVestimenta(actividad.isRequiereVestimenta())
+                .terminosCondiciones(actividad.getTerminosCondiciones())
+                .edadMinima(actividad.getEdadMinima())
                 .build();
     }
 }

@@ -31,6 +31,12 @@ public class Actividad {
     @Column(name = "descripcion")
     private String descripcion;
 
+    @Column(name = "terminos_condiciones")
+    private String terminosCondiciones;
+
+    @Column(name = "edad_minima")
+    private int edadMinima;
+
     // Relación con Horarios
     @OneToMany(mappedBy = "actividad", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<HorarioActividad> horarios;

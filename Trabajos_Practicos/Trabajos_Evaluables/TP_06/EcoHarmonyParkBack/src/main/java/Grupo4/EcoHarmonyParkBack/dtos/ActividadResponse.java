@@ -16,4 +16,6 @@ public class ActividadResponse {
     private boolean requiereVestimenta;
     private int cupoMaximo;
     private String descripcion;
+    private String terminosCondiciones;
+    private int edadMinima;
 }

@@ -4,6 +4,7 @@ import Grupo4.EcoHarmonyParkBack.dtos.ActividadResponse;
 import Grupo4.EcoHarmonyParkBack.dtos.HorarioResponse;
 import Grupo4.EcoHarmonyParkBack.dtos.InscripcionRequest;
 import Grupo4.EcoHarmonyParkBack.dtos.InscripcionResponse;
+import Grupo4.EcoHarmonyParkBack.entities.Actividad;
 import Grupo4.EcoHarmonyParkBack.mappers.ActividadToActividadResponse;
 import Grupo4.EcoHarmonyParkBack.services.ActividadService;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -12,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @Tag(name = "Actividades")
 @RestController
@@ -24,6 +26,14 @@ public class ActividadController {
     public ResponseEntity<List<ActividadResponse>> obtenerActividades(){
         List<ActividadResponse> actividades = actividadService.obtenerActividades();
         return ResponseEntity.ok(actividades);
+    }
+
+    @GetMapping("/{actividadId}")
+    public ResponseEntity<ActividadResponse> obtenerActividadPorId(@PathVariable("actividadId") Long actividadId){
+        Actividad actividad = actividadService.obtenerActividadPorId(actividadId)
+                .orElseThrow(() -> new NoSuchElementException("Actividad no encontrada"));
+
+        return ResponseEntity.ok(new ActividadToActividadResponse().apply(actividad));
     }
 
     @GetMapping("/{actividadId}/horarios")
