@@ -9,9 +9,11 @@ import Grupo4.EcoHarmonyParkBack.mappers.ActividadToActividadResponse;
 import Grupo4.EcoHarmonyParkBack.services.ActividadService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -37,8 +39,11 @@ public class ActividadController {
     }
 
     @GetMapping("/{actividadId}/horarios")
-    public ResponseEntity<List<HorarioResponse>> obtenerHorarios(@PathVariable("actividadId") Long actividadId){
-        List<HorarioResponse> horarios = actividadService.obtenerHorarios(actividadId);
+    public ResponseEntity<List<HorarioResponse>> obtenerHorarios(
+            @PathVariable("actividadId") Long actividadId,
+            @RequestParam("fecha") LocalDate fecha
+    ){
+        List<HorarioResponse> horarios = actividadService.obtenerHorarios(actividadId, fecha);
         return ResponseEntity.ok(horarios);
     }
 

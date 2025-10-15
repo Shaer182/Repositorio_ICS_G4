@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
 
 @Data
@@ -13,6 +14,10 @@ import java.time.LocalTime;
 @Builder
 public class HorarioResponse {
     private Long id;
+    private LocalDate fecha;
     private LocalTime horaInicio;
     private LocalTime horaFin;
+    private int cuposDisponibles;
+    private int cupoMaximo;
+    private String nombreActividad;
 }

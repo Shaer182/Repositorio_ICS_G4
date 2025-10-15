@@ -12,6 +12,10 @@ public class HorarioToHorarioResponse implements Function<HorarioActividad, Hora
                 .id(horarioActividad.getId())
                 .horaInicio(horarioActividad.getHoraInicio())
                 .horaFin(horarioActividad.getHoraFin())
+                .fecha(horarioActividad.getFecha())
+                .cupoMaximo(horarioActividad.getActividad().getCupoMaximo())
+                .cuposDisponibles(horarioActividad.getCuposDisponibles())
+                .nombreActividad(horarioActividad.getActividad().getNombre())
                 .build();
     }
 }
