@@ -13,5 +13,5 @@ import lombok.NoArgsConstructor;
 public class InscripcionRequest {
     private List<VisitanteRequest> visitantes;
     private Long horarioActividadId;
-    private Boolean aceptaTyC;
+    private int cantidadPersonas;
 }

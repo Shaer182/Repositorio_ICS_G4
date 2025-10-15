@@ -5,11 +5,15 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class InscripcionResponse {
     private Long id;
-    private String mensaje;
+    private LocalDateTime fechaInscripcion;
+    private int cantidadPersonas;
 }
