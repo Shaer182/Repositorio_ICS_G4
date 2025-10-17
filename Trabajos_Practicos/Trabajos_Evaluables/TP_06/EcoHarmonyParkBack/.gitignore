@@ -1,3 +1,7 @@
+# ================================
+# BACKEND (Spring Boot / Maven)
+# ================================
+
 HELP.md
 target/
 .mvn/wrapper/maven-wrapper.jar
@@ -31,3 +35,85 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# ================================
+# FRONTEND (Next.js / React)
+# ================================
+
+# Dependencies
+frontend/node_modules/
+frontend/.pnp
+frontend/.pnp.js
+
+# Testing
+frontend/coverage/
+
+# Next.js
+frontend/.next/
+frontend/out/
+
+# Production
+frontend/build/
+
+# Misc
+frontend/.DS_Store
+frontend/*.pem
+
+# Debug
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# Local env files
+frontend/.env*.local
+frontend/.env
+
+# Vercel
+frontend/.vercel
+
+# TypeScript
+frontend/*.tsbuildinfo
+frontend/next-env.d.ts
+
+# ================================
+# BASE DE DATOS
+# ================================
+
+# Scripts SQL de datos de prueba (no subir al repo)
+*.sql
+datos_prueba.sql
+
+# Archivos de backup de base de datos
+*.dump
+*.backup
+
+# ================================
+# SISTEMA OPERATIVO
+# ================================
+
+# MacOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+
+# ================================
+# LOGS Y TEMPORALES
+# ================================
+
+*.log
+*.tmp
+*.temp
+logs/
+temp/
