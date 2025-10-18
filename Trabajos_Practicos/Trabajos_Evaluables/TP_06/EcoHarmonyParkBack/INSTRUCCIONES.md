@@ -86,7 +86,7 @@ Antes de comenzar, asegúrate de tener instalado:
 
 2. **Navega a la carpeta del frontend**:
    ```bash
-   cd EcoHarmonyParkBack/frontend
+   cd EcoHarmonyParkFront
    ```
 
 3. **Instala las dependencias**:
@@ -151,7 +151,7 @@ Deberías ver:
 
 2. **Terminal 2 - Frontend**:
    ```bash
-   cd EcoHarmonyParkBack/frontend
+   cd EcoHarmonyParkFront
    npm run dev
    ```
 
