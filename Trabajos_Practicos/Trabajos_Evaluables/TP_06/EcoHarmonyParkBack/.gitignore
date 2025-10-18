@@ -36,6 +36,9 @@ build/
 ### VS Code ###
 .vscode/
 
+### Claude Code ###
+.claude/
+
 # ================================
 # FRONTEND (Next.js / React)
 # ================================
