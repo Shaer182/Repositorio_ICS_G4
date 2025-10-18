@@ -1,24 +1,39 @@
 package Grupo4.EcoHarmonyParkBack;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 
+import Grupo4.EcoHarmonyParkBack.dtos.InscripcionRequest;
+import Grupo4.EcoHarmonyParkBack.dtos.InscripcionResponse;
+import Grupo4.EcoHarmonyParkBack.dtos.VisitanteRequest;
+import Grupo4.EcoHarmonyParkBack.entities.*;
+import Grupo4.EcoHarmonyParkBack.repositories.HorarioActividadRepository;
+import Grupo4.EcoHarmonyParkBack.repositories.VisitanteRepository;
+import Grupo4.EcoHarmonyParkBack.services.ActividadService;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.Collections;
 import java.util.List;
-import Grupo4.EcoHarmonyParkBack.entities.Visitante;
+import java.util.Optional;
 import Grupo4.EcoHarmonyParkBack.repositories.InscripcionRepository;
 import Grupo4.EcoHarmonyParkBack.services.InscripcionService;
+import Grupo4.EcoHarmonyParkBack.entities.Visitante;
 import net.bytebuddy.description.annotation.AnnotationList.Empty;
+import org.springframework.boot.test.mock.mockito.MockBean;
 
 @SpringBootTest
 class EcoHarmonyParkBackApplicationTests {
 
-	@Mock
-	private InscripcionRepository inscripcionRepository;
+
 
 	@InjectMocks
 	private InscripcionService inscripcionService;
@@ -27,15 +42,66 @@ class EcoHarmonyParkBackApplicationTests {
 	void contextLoads() {
 	}
 
+    @MockBean private HorarioActividadRepository horarioRepository;
+    @MockBean
+    private VisitanteRepository visitanteRepository;
+    @MockBean private InscripcionRepository inscripcionRepository;
+
+    @Autowired
+    private ActividadService actividadService;
+
+    private HorarioActividad horario;
+
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+
+        // Simular actividad con vestimenta
+        Actividad actividad = Actividad.builder()
+                .id(1L)
+                .nombre("Escalada")
+                .requiereVestimenta(true)
+                .build();
+
+        // Simular horario con cupos
+        horario = HorarioActividad.builder()
+                .id(3L)
+                .actividad(actividad)
+                .cuposDisponibles(5)
+                .build();
+
+        when(horarioRepository.findById(3L)).thenReturn(Optional.of(horario));
+    }
+
 	@Test
 	void testInscripcionCorrecta() {
 
-		List<Visitante> visitantes = List.of(
-				new Visitante("Juan Perez", "12345678", 30, "M"),
-				new Visitante("Maria Gomez", "87654321", 25, "S")
+		List<VisitanteRequest> visitantes = List.of(
+				new VisitanteRequest("Juan Perez", "12345678", 30, "M"),
+				new VisitanteRequest("Maria Gomez", "87654321", 25, "S")
 		);
 
-		int resultado = inscripcionService.inscribirActividad(visitantes, 1L, true	);
+        InscripcionRequest request = new InscripcionRequest();
+        request.setHorarioActividadId(3L);
+        request.setCantidadPersonas(2);
+        request.setVisitantes(visitantes);
+
+        // ---  Mockear comportamiento del repositorio ---
+        when(visitanteRepository.findByDni(anyString())).thenReturn(Optional.empty());
+        when(visitanteRepository.save(any(Visitante.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(inscripcionRepository.save(any(Inscripcion.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        InscripcionResponse proceso = actividadService.inscribirActividad(request);
+
+        int resultado;
+
+        if (proceso != null){
+            resultado = 0;
+        }
+        else{
+            resultado = 1;
+        }
+
 
 		try {
 			assertEquals(0, resultado);
