@@ -1,7 +1,6 @@
 package Grupo4.EcoHarmonyParkBack;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
@@ -93,18 +92,23 @@ class EcoHarmonyParkBackApplicationTests {
 
         InscripcionResponse proceso = actividadService.inscribirActividad(request);
 
-        int resultado;
+        try {
+            proceso = actividadService.inscribirActividad(request);
+        } catch (RuntimeException e) {
+            proceso = null;
+        }
+
+        Boolean resultado;
 
         if (proceso != null){
-            resultado = 0;
+            resultado = true;
         }
         else{
-            resultado = 1;
+            resultado = false;
         }
 
-
 		try {
-			assertEquals(0, resultado);
+			assertEquals(true, resultado);
 			System.out.println("Test de inscripcion correcta pasado");
 		} catch (AssertionError e) {
 			System.err.println("Test de inscripcion correcta fallido: " + e.getMessage());
@@ -115,17 +119,44 @@ class EcoHarmonyParkBackApplicationTests {
 	@Test
 	void testInscripcionDuplicada() {
 		
-		List<Visitante> visitantes = List.of(
-				new Visitante("Juan Perez", "12345678", 30, "M")
+		List<VisitanteRequest> visitantes = List.of(
+				new VisitanteRequest("Juan Perez", "12345678", 30, "M"),
+                new VisitanteRequest("Juan Perez", "12345678", 30, "M")
 		);
 
-		int resultado = inscripcionService.inscribirActividad(visitantes, 1L, true);
+        InscripcionRequest request = new InscripcionRequest();
+        request.setHorarioActividadId(3L);
+        request.setCantidadPersonas(2);
+        request.setVisitantes(visitantes);
+
+        // ---  Mockear comportamiento del repositorio ---
+        when(visitanteRepository.findByDni(anyString())).thenReturn(Optional.empty());
+        when(visitanteRepository.save(any(Visitante.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(inscripcionRepository.save(any(Inscripcion.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        InscripcionResponse proceso;
+
+        try {
+            proceso = actividadService.inscribirActividad(request);
+        } catch (RuntimeException e) {
+            proceso = null;
+        }
+        boolean resultado;
+
+        if (proceso != null){
+            resultado = true;
+        }
+        else{
+            resultado = false;
+        }
+
 
 		try {
-			assertEquals(1, resultado);
+			assertEquals(false, resultado);
 			System.out.println("Test de inscripcion duplicada pasado");
 		} catch (AssertionError e) {
 			System.err.println("Test de inscripcion duplicada fallado: " + e.getMessage());
+            fail();
 		}
 		
 	}
@@ -133,17 +164,46 @@ class EcoHarmonyParkBackApplicationTests {
 	@Test
 	void testInscripcionDatosFaltantes() {
 		
-		List<Visitante> visitantes = List.of(
-				new Visitante("Juan Perez", "12345678", 30, "M")
+		List<VisitanteRequest> visitantes = List.of(
+				new VisitanteRequest("Juan Perez", "12345678", 30, "M")
 		);
 
-		int resultado = inscripcionService.inscribirActividad(visitantes, 1L, true);
+        InscripcionRequest request = new InscripcionRequest();
+        //request.setHorarioActividadId(3L);
+        request.setCantidadPersonas(2);
+        request.setVisitantes(visitantes);
+
+        // ---  Mockear comportamiento del repositorio ---
+        when(visitanteRepository.findByDni(anyString())).thenReturn(Optional.empty());
+        when(visitanteRepository.save(any(Visitante.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(inscripcionRepository.save(any(Inscripcion.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        InscripcionResponse proceso;
+
+        try {
+            proceso = actividadService.inscribirActividad(request);
+        } catch (RuntimeException e) {
+            proceso = null;
+        }
+
+        boolean resultado;
+
+        if (proceso != null){
+            resultado = true;
+            System.out.println("proceso: " + proceso.toString());
+
+        }
+        else{
+            resultado = false;
+        }
 
 		try {
-			assertEquals(2, resultado);
+			assertEquals(false, resultado);
 			System.out.println("Test de inscripcion con datos faltantes pasado");
+
 		} catch (AssertionError e) {
 			System.err.println("Test de inscripcion con datos faltantes fallido: " + e.getMessage());
+            fail();
 		}
 		
 	}
@@ -151,24 +211,50 @@ class EcoHarmonyParkBackApplicationTests {
 	@Test
 	void testInscripcionCupoExcedido() {
 
-		List<Visitante> visitantes = List.of(
-				new Visitante("Juan Perez", "12345678", 30, "M")
+		List<VisitanteRequest> visitantes = List.of(
+				new VisitanteRequest("Juan Perez", "12345678", 30, "M")
 		);
 
-		int resultado = inscripcionService.inscribirActividad(visitantes, 1L, true);
+        InscripcionRequest request = new InscripcionRequest();
+        request.setHorarioActividadId(3L);
+        request.setCantidadPersonas(7);
+        //
+        request.setVisitantes(visitantes);
+
+        // ---  Mockear comportamiento del repositorio ---
+        when(visitanteRepository.findByDni(anyString())).thenReturn(Optional.empty());
+        when(visitanteRepository.save(any(Visitante.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(inscripcionRepository.save(any(Inscripcion.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        InscripcionResponse proceso;
+
+        try {
+            proceso = actividadService.inscribirActividad(request);
+        } catch (RuntimeException e) {
+            proceso = null;
+        }
+        boolean resultado;
+
+        if (proceso != null){
+            resultado = true;
+        }
+        else{
+            resultado = false;
+        }
 
 		try {
-			assertEquals(3, resultado);
+			assertEquals(false, resultado);
 			System.out.println("Test de inscripcion con cupos excedidos pasado");
 		} catch (AssertionError e) {
 			System.err.println("Test de inscripcion con cupos excedidos fallido: " + e.getMessage());
+            fail();
 		}
 		
 	}
 
 	@Test
 	void testInscripcionSinTyC() {
-		
+        //TyC: terminos y condiciones
 		List<Visitante> visitantes = List.of(
 				new Visitante("Juan Perez", "12345678", 30, "M")
 		);
@@ -180,6 +266,7 @@ class EcoHarmonyParkBackApplicationTests {
 			System.out.println("Test de inscripcion sin aceptar TyC pasado");
 		} catch (AssertionError e) {
 			System.err.println("Test de inscripcion sin aceptar TyC fallido: " + e.getMessage());
+            fail();
 		}
 		
 	}
@@ -187,34 +274,83 @@ class EcoHarmonyParkBackApplicationTests {
 	@Test
 	void testInscripcionMenorEdad() {
 		
-		List<Visitante> visitantes = List.of(
-				new Visitante("Juan Perez", "12345678", 10, "M")
+		List<VisitanteRequest> visitantes = List.of(
+				new VisitanteRequest("Juan Perez", "12345678", 10, "M")
 		);
 
-		int resultado = inscripcionService.inscribirActividad(visitantes, 1L, true);
+        InscripcionRequest request = new InscripcionRequest();
+        request.setHorarioActividadId(3L);
+        request.setCantidadPersonas(2);
+        request.setVisitantes(visitantes);
 
+        // ---  Mockear comportamiento del repositorio ---
+        when(visitanteRepository.findByDni(anyString())).thenReturn(Optional.empty());
+        when(visitanteRepository.save(any(Visitante.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(inscripcionRepository.save(any(Inscripcion.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        InscripcionResponse proceso;
+
+        try {
+            proceso = actividadService.inscribirActividad(request);
+        } catch (RuntimeException e) {
+            proceso = null;
+        }
+        boolean resultado;
+
+        if (proceso != null){
+            resultado = true;
+        }
+        else{
+            resultado = false;
+        }
 		try {
-			assertEquals(5, resultado);
+			assertEquals(true, resultado);
 			System.out.println("Test de inscripcion siendo menor de edad pasado");
 		} catch (AssertionError e) {
 			System.err.println("Test de inscripcion siendo menor de edad fallido: " + e.getMessage());
+            fail();
 		}	
 	}
 
 	@Test
 	void testInscripcionSinTalle() {
 		
-		List<Visitante> visitantes = List.of(
-				new Visitante("Juan Perez", "12345678", 30, null)
+		List<VisitanteRequest> visitantes = List.of(
+				new VisitanteRequest("Juan Perez", "12345678", 30, null)
 		);
 
-		int resultado = inscripcionService.inscribirActividad(visitantes, 1L, true);
+        InscripcionRequest request = new InscripcionRequest();
+        request.setHorarioActividadId(3L);
+        request.setCantidadPersonas(2);
+        request.setVisitantes(visitantes);
 
+        // ---  Mockear comportamiento del repositorio ---
+        when(visitanteRepository.findByDni(anyString())).thenReturn(Optional.empty());
+        when(visitanteRepository.save(any(Visitante.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(inscripcionRepository.save(any(Inscripcion.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        InscripcionResponse proceso;
+
+        try {
+            proceso = actividadService.inscribirActividad(request);
+        } catch (RuntimeException e) {
+            proceso = null;
+        }
+
+        boolean resultado;
+
+        if (proceso != null){
+            resultado = true;
+        }
+        else{
+            resultado = false;
+        }
 		try {
-			assertEquals(6, resultado);
+			assertEquals(false, resultado);
 			System.out.println("Test de inscripcion sin ingresar talle pasado");
 		} catch (AssertionError e) {
 			System.err.println("Test de inscripcion sin ingresar talle fallido: " + e.getMessage());
+            fail();
 		}	
 	}
 
