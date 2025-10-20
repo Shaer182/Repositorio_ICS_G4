@@ -5,16 +5,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-import java.util.List;
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class InscripcionResponse {
+public class VisitanteResponse {
     private Long id;
-    private LocalDateTime fechaInscripcion;
-    private int cantidadPersonas;
-    private List<VisitanteResponse> visitantes;
+    private String nombre;
+    private String dni;
+    private int edad;
+    private String tallaVestimenta;
 }

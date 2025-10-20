@@ -17,11 +17,11 @@ public class Grupo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "visitante_id")
-    private Visitante visitante;
-
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "inscripcion_id")
+    @ManyToOne
+    @JoinColumn(name = "inscripcion_id", nullable = false)
     private Inscripcion inscripcion;
+
+    @ManyToOne
+    @JoinColumn(name = "visitante_id", nullable = false)
+    private Visitante visitante;
 }

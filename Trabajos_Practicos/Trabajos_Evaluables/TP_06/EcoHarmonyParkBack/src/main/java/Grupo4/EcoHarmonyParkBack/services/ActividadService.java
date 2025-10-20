@@ -26,8 +26,6 @@ import java.util.Optional;
 public class ActividadService {
     private final ActividadRepository actividadRepository;
     private final HorarioActividadRepository horarioRepository;
-    private final InscripcionRepository inscripcionRepository;
-    private final VisitanteService visitanteService;
 
     public List<ActividadResponse> obtenerActividades(){
         return this.actividadRepository.findAll()
@@ -68,62 +66,5 @@ public class ActividadService {
 
     public Optional<Actividad> obtenerActividadPorId(Long id){
         return this.actividadRepository.findById(id);
-    }
-
-    @Transactional
-    public InscripcionResponse inscribirActividad(InscripcionRequest request) {
-        // Buscar el horario
-        HorarioActividad horario = horarioRepository.findById(request.getHorarioActividadId())
-                .orElseThrow(() -> new RuntimeException("Horario no encontrado"));
-
-        Actividad actividad = horario.getActividad();
-        boolean requiereTalla = actividad.isRequiereVestimenta();
-        int edadMinima = actividad.getEdadMinima();
-
-        // Validar cupos disponibles
-        int cantidadSolicitada = request.getCantidadPersonas();
-        if (horario.getCuposDisponibles() < cantidadSolicitada) {
-            throw new RuntimeException("No hay cupos suficientes para este horario. Cupos disponibles: "
-                    + horario.getCuposDisponibles());
-        }
-
-        // Descontar los cupos
-        horario.setCuposDisponibles(horario.getCuposDisponibles() - cantidadSolicitada);
-        horarioRepository.save(horario);
-
-        // Crear la inscripción
-        Inscripcion inscripcion = Inscripcion.builder()
-                .horarioActividad(horario)
-                .cantidadPersonas(cantidadSolicitada)
-                .fechaInscripcion(LocalDateTime.now())
-                .build();
-
-        List<Grupo> grupos = new ArrayList<>();
-
-        // Procesar visitantes
-        for (VisitanteRequest vr : request.getVisitantes()) {
-
-            if (requiereTalla && (vr.getTallaVestimenta() == null || vr.getTallaVestimenta().isEmpty())) {
-                throw new RuntimeException("La actividad requiere talla de vestimenta para todos los visitantes");
-            }
-
-            if (vr.getEdad() < edadMinima) {
-                throw new RuntimeException("El visitante " + vr.getNombre() + " tiene " + vr.getEdad() + " años, y la edad mínima requerida es " + edadMinima + " años.");
-            }
-
-            Visitante visitante = visitanteService.crearVisitante(vr);
-
-            Grupo grupo = Grupo.builder()
-                    .visitante(visitante)
-                    .inscripcion(inscripcion)
-                    .build();
-
-            grupos.add(grupo);
-        }
-
-        inscripcion.setGrupos(grupos);
-        inscripcionRepository.save(inscripcion);
-
-        return new InscripcionToInscripcionResponse().apply(inscripcion);
     }
 }

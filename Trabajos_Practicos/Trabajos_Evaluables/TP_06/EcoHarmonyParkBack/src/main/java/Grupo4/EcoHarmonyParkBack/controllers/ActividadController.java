@@ -46,10 +46,4 @@ public class ActividadController {
         List<HorarioResponse> horarios = actividadService.obtenerHorarios(actividadId, fecha);
         return ResponseEntity.ok(horarios);
     }
-
-    @PostMapping("/inscripciones")
-    public ResponseEntity<InscripcionResponse> inscribirActividad(@RequestBody InscripcionRequest request) {
-        InscripcionResponse response = actividadService.inscribirActividad(request);
-        return ResponseEntity.ok(response);
-    }
 }

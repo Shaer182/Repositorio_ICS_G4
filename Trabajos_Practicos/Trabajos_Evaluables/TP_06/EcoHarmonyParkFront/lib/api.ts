@@ -19,7 +19,8 @@ export async function getActivities(): Promise<Activity[]> {
     const actividades: ActividadResponse[] = await actividadesResponse.json()
 
     // Para cada actividad, obtener sus horarios de hoy
-    const today = new Date().toISOString().split('T')[0] // formato YYYY-MM-DD
+    //const today = new Date().toISOString().split('T')[0] // formato YYYY-MM-DD
+    const today = "2025-10-22" // Fecha fija para pruebas
 
     const actividadesConHorarios = await Promise.all(
       actividades.map(async (actividad) => {
