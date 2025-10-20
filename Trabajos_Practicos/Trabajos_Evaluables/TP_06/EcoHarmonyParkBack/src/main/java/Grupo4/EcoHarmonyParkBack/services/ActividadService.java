@@ -26,8 +26,8 @@ import java.util.Optional;
 public class ActividadService {
     private final ActividadRepository actividadRepository;
     private final HorarioActividadRepository horarioRepository;
-    private final VisitanteRepository visitanteRepository;
     private final InscripcionRepository inscripcionRepository;
+    private final VisitanteService visitanteService;
 
     public List<ActividadResponse> obtenerActividades(){
         return this.actividadRepository.findAll()
@@ -66,7 +66,6 @@ public class ActividadService {
                 .toList();
     }
 
-
     public Optional<Actividad> obtenerActividadPorId(Long id){
         return this.actividadRepository.findById(id);
     }
@@ -79,6 +78,7 @@ public class ActividadService {
 
         Actividad actividad = horario.getActividad();
         boolean requiereTalla = actividad.isRequiereVestimenta();
+        int edadMinima = actividad.getEdadMinima();
 
         // Validar cupos disponibles
         int cantidadSolicitada = request.getCantidadPersonas();
@@ -107,23 +107,11 @@ public class ActividadService {
                 throw new RuntimeException("La actividad requiere talla de vestimenta para todos los visitantes");
             }
 
-            Visitante visitante = visitanteRepository.findByDni(vr.getDni())
-                    .map(existente -> {
-                        existente.setNombre(vr.getNombre());
-                        existente.setEdad(vr.getEdad());
-                        if (vr.getTallaVestimenta() != null) {
-                            existente.setTallaVestimenta(vr.getTallaVestimenta());
-                        }
-                        return visitanteRepository.save(existente);
-                    })
-                    .orElseGet(() -> visitanteRepository.save(
-                            Visitante.builder()
-                                    .nombre(vr.getNombre())
-                                    .dni(vr.getDni())
-                                    .edad(vr.getEdad())
-                                    .tallaVestimenta(vr.getTallaVestimenta())
-                                    .build()
-                    ));
+            if (vr.getEdad() < edadMinima) {
+                throw new RuntimeException("El visitante " + vr.getNombre() + " tiene " + vr.getEdad() + " años, y la edad mínima requerida es " + edadMinima + " años.");
+            }
+
+            Visitante visitante = visitanteService.crearVisitante(vr);
 
             Grupo grupo = Grupo.builder()
                     .visitante(visitante)
