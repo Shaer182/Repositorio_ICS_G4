@@ -79,59 +79,50 @@ export async function getActivities(): Promise<Activity[]> {
   }
 }
 
-export async function registerForActivity(registration: ActivityRegistration): Promise<ApiResponse<void>> {
-  try {
-    // Transformar al formato esperado por el backend
-    const inscripcionRequest = {
-      visitantes: [
-        {
-          nombre: registration.visitorName,
-          dni: registration.visitorDni,
-          edad: registration.visitorAge,
-          tallaVestimenta: registration.clothingSize || null
-        }
-      ],
-      horarioActividadId: registration.horarioActividadId,
-      cantidadPersonas: 1
-    }
 
-    const response = await fetch(`${API_BASE_URL}/actividades/inscripciones`, {
+export type ApiResult<T = any> = {
+  success: boolean;
+  message: string;
+  data?: T;
+};
+
+export async function registerForActivity(inscripcionRequest: {
+  visitantes: { nombre: string; dni: string; edad: number; tallaVestimenta: string | null }[];
+  horarioActividadId: number;
+  cantidadPersonas: number;
+}): Promise<ApiResult<any>> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/inscripciones`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(inscripcionRequest),
-    })
+    });
+
+    const text = await response.text();
 
     if (!response.ok) {
-      const errorText = await response.text()
-      let errorMessage = "Error al procesar la inscripción"
-
+      // Intentamos parsear JSON con message, si no, devolvemos el texto
+      let parsedMessage = text || "Error al procesar la inscripción";
       try {
-        const errorData = JSON.parse(errorText)
-        errorMessage = errorData.message || errorMessage
-      } catch {
-        errorMessage = errorText || errorMessage
+        const json = JSON.parse(text);
+        parsedMessage = json.message || parsedMessage;
+      } catch (e) {
+        // mantener text
       }
-
-      return {
-        success: false,
-        message: errorMessage,
-      }
+      return { success: false, message: parsedMessage };
     }
 
-    const data = await response.json()
-
-    return {
-      success: true,
-      data: undefined,
-      message: "Inscripción exitosa",
+    // Si ok, parseamos JSON si lo hay
+    let data: any = undefined;
+    try {
+      data = text ? JSON.parse(text) : undefined;
+    } catch {
+      data = text;
     }
+
+    return { success: true, message: "Inscripción exitosa", data };
   } catch (error) {
-    console.error("[v0] Error registering for activity:", error)
-    return {
-      success: false,
-      message: "Error de conexión. Por favor, intente nuevamente.",
-    }
+    console.error("[api] registerForActivity error:", error);
+    return { success: false, message: "Error de conexión. Por favor, intente nuevamente." };
   }
 }

@@ -12,7 +12,7 @@ import {
   ActivityFromApi,
   Participant,
   API_BASE_URL,
-  minDateForInput
+  minDateForInput,
 } from "../lib/types"
 
 // Importar todos los subcomponentes
@@ -27,11 +27,15 @@ import {
   ConfirmationModal
 } from "./ActivityComponents"
 
+import { registerForActivity } from "../lib/api" 
+
+
 // ---------------------------
 // Componente principal (usa los subcomponentes)
 // ---------------------------
 export function ActivityRegistrationForm() {
   const [currentStep, setCurrentStep] = useState<Step>("activity")
+  const [submitting, setSubmitting] = useState(false)
   const [activities, setActivities] = useState<ActivityFromApi[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedActivity, setSelectedActivity] = useState<ActivityFromApi | null>(null)
@@ -212,48 +216,75 @@ export function ActivityRegistrationForm() {
     }
   }
 
-  const handleSubmit = async () => {
-    if (!validateStep("terms")) return
-    if (!selectedActivity || !selectedTimeSlot || !selectedDate) return
+const handleSubmit = async () => {
+  // Validar términos y pasos
+  if (!validateStep("terms")) return;
+  if (!selectedActivity || !selectedTimeSlot || !selectedDate) return;
 
-    const inscripcionRequest = {
-      visitantes: participants.map((p) => ({
-        nombre: p.name,
-        dni: p.dni,
-        edad: Number(p.age),
-        tallaVestimenta: p.clothingSize || null,
-      })),
-      horarioActividadId: Number(selectedTimeSlot.id),
-      cantidadPersonas: participants.length,
+  // Construir visitantes (validar edades como número)
+  const visitantesPayload = participants.map((p, i) => {
+    const edadNum = Number(p.age);
+    return {
+      nombre: p.name.trim(),
+      dni: p.dni.trim(),
+      edad: Number.isFinite(edadNum) && edadNum > 0 ? edadNum : 0, // si backend exige >0 podés validar antes
+      tallaVestimenta: p.clothingSize ? p.clothingSize : null,
+    };
+  });
+
+  // Asegurar horarioActividadId como número (usa raw.id si existe)
+  const horarioIdFromRaw =
+    selectedTimeSlot.raw && (selectedTimeSlot.raw as any).id
+      ? Number((selectedTimeSlot.raw as any).id)
+      : Number(selectedTimeSlot.id);
+
+  const inscripcionRequest = {
+    visitantes: visitantesPayload,
+    horarioActividadId: horarioIdFromRaw,
+    cantidadPersonas: visitantesPayload.length,
+  };
+
+  setSubmitting(true);
+  setErrors([]);
+
+  try {
+    const result = await registerForActivity(inscripcionRequest);
+
+    if (!result.success) {
+      setErrors([result.message || "Error al procesar la inscripción"]);
+      return;
     }
 
+    // Éxito: el backend probablemente devuelve el InscripcionResponse; lo tenés en result.data
+    setRegistrationComplete(true);
+    setCurrentStep("confirmation");
+
+    // Opcional: refrescar horarios para actualizar cupos disponibles
     try {
-      const res = await fetch(`${API_BASE_URL}/actividades/inscripciones`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(inscripcionRequest),
-      })
-
-      if (!res.ok) {
-        const text = await res.text()
-        let msg = "Error al procesar la inscripción"
-        try {
-          const json = JSON.parse(text)
-          msg = json.message || msg
-        } catch (e) {
-          msg = text || msg
-        }
-        setErrors([msg])
-        return
+      if (selectedActivity && selectedDate) {
+        const horarios = await fetchHorarios(selectedActivity.id, selectedDate);
+        const mapped = horarios.map((h) => ({
+          id: String(h.id),
+          time: h.horaInicio ? `${h.horaInicio}${h.horaFin ? ` - ${h.horaFin}` : ""}` : "",
+          date: h.fecha,
+          availableSpots: h.cuposDisponibles,
+          isAvailable: h.cuposDisponibles > 0,
+          raw: h,
+        }));
+        setTimeSlots(mapped);
       }
-
-      setRegistrationComplete(true)
-      setCurrentStep("confirmation")
-    } catch (err) {
-      console.error(err)
-      setErrors(["Error de conexión. Por favor, intente nuevamente."])
+    } catch (e) {
+      console.warn("No se pudo refrescar horarios tras inscripción", e);
     }
+  } catch (err) {
+    console.error(err);
+    setErrors(["Error de conexión. Por favor, intente nuevamente."]);
+  } finally {
+    setSubmitting(false);
   }
+};
+
+
 
   const handleReset = () => {
     setCurrentStep("activity")
@@ -318,11 +349,12 @@ export function ActivityRegistrationForm() {
     </div>
 
     {selectedDate && (
+      
       <div style={{ marginTop: 20 }}>
         <h4 className="section-title">Horarios disponibles para {selectedActivity.name}</h4>
         <p className="section-description">Seleccione el horario que prefiera</p>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 12, marginTop: 12 }}>
+        <div className="activities-grid">
           {timeSlots.length === 0 ? (
             <div className="badge badge-muted">No hay horarios para la fecha seleccionada</div>
           ) : (
