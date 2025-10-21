@@ -1,5 +1,5 @@
-import { ActivitiesPage } from "@/components/activities-page"
+import { ActivityRegistrationForm } from "../components/ActivityRegistrationForm"
 
 export default function Home() {
-  return <ActivitiesPage />
+  return <ActivityRegistrationForm />
 }

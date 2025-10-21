@@ -269,6 +269,12 @@ body {
   to { transform: rotate(360deg); }
 }
 
+.activity-card--selected {
+  border-color: var(--verde-claro);
+  box-shadow: 0 8px 12px rgba(0,0,0,0.12);
+}
+
+
 /* Error message */
 .error-box {
   background-color: rgba(220, 38, 38, 0.1);

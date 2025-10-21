@@ -1,0 +1,389 @@
+"use client"
+
+import React, { useEffect, useState } from "react"
+import '../app/globals.css'
+
+// Importar tipos, constantes y helpers
+import {
+  ActividadResponse,
+  HorarioResponse,
+  Step,
+  TimeSlot,
+  ActivityFromApi,
+  Participant,
+  API_BASE_URL,
+  minDateForInput
+} from "../lib/types"
+
+// Importar todos los subcomponentes
+import {
+  Header,
+  ErrorBox,
+  Spinner,
+  ActivityCard,
+  TimeSlotCard,
+  ParticipantsForm,
+  TermsSection,
+  ConfirmationModal
+} from "./ActivityComponents"
+
+// ---------------------------
+// Componente principal (usa los subcomponentes)
+// ---------------------------
+export function ActivityRegistrationForm() {
+  const [currentStep, setCurrentStep] = useState<Step>("activity")
+  const [activities, setActivities] = useState<ActivityFromApi[]>([])
+  const [loading, setLoading] = useState(false)
+  const [selectedActivity, setSelectedActivity] = useState<ActivityFromApi | null>(null)
+  const [selectedDate, setSelectedDate] = useState<string | undefined>(undefined) // YYYY-MM-DD
+  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([])
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState<TimeSlot | null>(null)
+  const [participantCount, setParticipantCount] = useState<number>(1)
+  const [participants, setParticipants] = useState<Participant[]>([{ name: "", dni: "", age: "", clothingSize: "" }])
+  const [termsAccepted, setTermsAccepted] = useState(false)
+  const [errors, setErrors] = useState<string[]>([])
+  const [registrationComplete, setRegistrationComplete] = useState(false)
+
+  useEffect(() => {
+    let mounted = true
+    setLoading(true)
+    fetch(`${API_BASE_URL}/actividades`, { headers: { "Content-Type": "application/json" } })
+      .then(async (res) => {
+        if (!res.ok) throw new Error("Error al cargar actividades")
+        const data: ActividadResponse[] = await res.json()
+        if (!mounted) return
+        const mapped: ActivityFromApi[] = data.map((a) => ({
+          id: a.id,
+          name: a.nombre,
+          description: a.descripcion,
+          requiereVestimenta: a.requiereVestimenta,
+          capacity: a.cupoMaximo,
+          terminosCondiciones: a.terminosCondiciones,
+          horarios: [],
+        }))
+        setActivities(mapped)
+      })
+      .catch((err) => {
+        console.error(err)
+        setErrors(["No se pudieron cargar las actividades. Intente nuevamente."])
+      })
+      .finally(() => setLoading(false))
+
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  async function fetchHorarios(activityId: number, dateISO: string) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/actividades/${activityId}/horarios?fecha=${dateISO}`, {
+        headers: { "Content-Type": "application/json" },
+      })
+      if (!res.ok) return [] as HorarioResponse[]
+      const horarios: HorarioResponse[] = await res.json()
+      return horarios
+    } catch (err) {
+      console.error(err)
+      return [] as HorarioResponse[]
+    }
+  }
+
+  const handleActivitySelect = async (activityId: number) => {
+    const activity = activities.find((a) => a.id === activityId) || null
+    setSelectedActivity(activity)
+    setSelectedDate(undefined)
+    setSelectedTimeSlot(null)
+    setTimeSlots([])
+    setErrors([])
+    setParticipantCount(1)
+    setParticipants([{ name: "", dni: "", age: "", clothingSize: "" }])
+    // remain in same step; user will click Siguiente to go to timeslot
+  }
+
+  const handleDateChange = async (dateValue: string) => {
+    if (!dateValue) return
+
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const selectedDateObj = new Date(dateValue)
+    selectedDateObj.setHours(0, 0, 0, 0)
+
+    if (selectedDateObj < today) {
+      setErrors(["No puede seleccionar una fecha anterior a hoy"])
+      return
+    }
+
+    setSelectedDate(dateValue)
+    setSelectedTimeSlot(null)
+    setErrors([])
+
+    if (selectedActivity) {
+      const dateISO = dateValue
+      const horarios = await fetchHorarios(selectedActivity.id, dateISO)
+      const mapped: TimeSlot[] = horarios.map((h) => ({
+        id: String(h.id),
+        time: h.horaInicio ? `${h.horaInicio}${h.horaFin ? ` - ${h.horaFin}` : ""}` : "",
+        date: h.fecha,
+        availableSpots: h.cuposDisponibles,
+        isAvailable: h.cuposDisponibles > 0,
+        raw: h,
+      }))
+      setTimeSlots(mapped)
+    }
+  }
+
+  const handleTimeSlotSelect = (timeSlotId: string) => {
+    const timeSlot = timeSlots.find((ts) => ts.id === timeSlotId) || null
+    if (timeSlot) {
+      if (!timeSlot.isAvailable) {
+        setErrors(["El horario seleccionado no está disponible"])
+        return
+      }
+      setSelectedTimeSlot(timeSlot)
+      setErrors([])
+    }
+  }
+
+  const handleParticipantCountChange = (count: number) => {
+    if (!selectedTimeSlot) return
+
+    if (count > selectedTimeSlot.availableSpots) {
+      setErrors([`Solo hay ${selectedTimeSlot.availableSpots} cupos disponibles para este horario`])
+      return
+    }
+
+    setParticipantCount(count)
+    const newParticipants = Array.from({ length: count }, (_, i) => participants[i] || { name: "", dni: "", age: "", clothingSize: "" })
+    setParticipants(newParticipants)
+    setErrors([])
+  }
+
+  const handleParticipantChange = (index: number, field: keyof Participant, value: string) => {
+    const newParticipants = [...participants]
+    newParticipants[index] = { ...newParticipants[index], [field]: value }
+    setParticipants(newParticipants)
+  }
+
+  const validateStep = (step: Step): boolean => {
+    const newErrors: string[] = []
+
+    switch (step) {
+      case "activity":
+        if (!selectedActivity) newErrors.push("Debe seleccionar una actividad")
+        break
+      case "timeslot":
+        if (!selectedDate) newErrors.push("Debe seleccionar una fecha")
+        if (!selectedTimeSlot) newErrors.push("Debe seleccionar un horario")
+        else if (!selectedTimeSlot.isAvailable) newErrors.push("El horario seleccionado no está disponible")
+        break
+      case "participants":
+        if (participantCount < 1) newErrors.push("Debe haber al menos un participante")
+        if (selectedTimeSlot && participantCount > selectedTimeSlot.availableSpots) newErrors.push(`Solo hay ${selectedTimeSlot.availableSpots} cupos disponibles`)
+
+        participants.forEach((p, i) => {
+          if (!p.name.trim()) newErrors.push(`Participante ${i + 1}: El nombre es requerido`)
+          if (!p.dni.trim()) newErrors.push(`Participante ${i + 1}: El DNI es requerido`)
+          if (!p.age.trim()) newErrors.push(`Participante ${i + 1}: La edad es requerida`)
+          if (selectedActivity?.requiereVestimenta && !p.clothingSize) newErrors.push(`Participante ${i + 1}: La talla de vestimenta es requerida para esta actividad`)
+        })
+        break
+      case "terms":
+        if (!termsAccepted) newErrors.push("Debe aceptar los términos y condiciones para continuar")
+        break
+    }
+
+    setErrors(newErrors)
+    return newErrors.length === 0
+  }
+
+  const handleNext = () => {
+    if (!validateStep(currentStep)) return
+    const steps: Step[] = ["activity", "timeslot", "participants", "terms", "confirmation"]
+    const currentIndex = steps.indexOf(currentStep)
+    if (currentIndex < steps.length - 1) setCurrentStep(steps[currentIndex + 1])
+  }
+
+  const handleBack = () => {
+    const steps: Step[] = ["activity", "timeslot", "participants", "terms", "confirmation"]
+    const currentIndex = steps.indexOf(currentStep)
+    if (currentIndex > 0) {
+      setCurrentStep(steps[currentIndex - 1])
+      setErrors([])
+    }
+  }
+
+  const handleSubmit = async () => {
+    if (!validateStep("terms")) return
+    if (!selectedActivity || !selectedTimeSlot || !selectedDate) return
+
+    const inscripcionRequest = {
+      visitantes: participants.map((p) => ({
+        nombre: p.name,
+        dni: p.dni,
+        edad: Number(p.age),
+        tallaVestimenta: p.clothingSize || null,
+      })),
+      horarioActividadId: Number(selectedTimeSlot.id),
+      cantidadPersonas: participants.length,
+    }
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/actividades/inscripciones`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(inscripcionRequest),
+      })
+
+      if (!res.ok) {
+        const text = await res.text()
+        let msg = "Error al procesar la inscripción"
+        try {
+          const json = JSON.parse(text)
+          msg = json.message || msg
+        } catch (e) {
+          msg = text || msg
+        }
+        setErrors([msg])
+        return
+      }
+
+      setRegistrationComplete(true)
+      setCurrentStep("confirmation")
+    } catch (err) {
+      console.error(err)
+      setErrors(["Error de conexión. Por favor, intente nuevamente."])
+    }
+  }
+
+  const handleReset = () => {
+    setCurrentStep("activity")
+    setSelectedActivity(null)
+    setSelectedDate(undefined)
+    setSelectedTimeSlot(null)
+    setTimeSlots([])
+    setParticipantCount(1)
+    setParticipants([{ name: "", dni: "", age: "", clothingSize: "" }])
+    setTermsAccepted(false)
+    setErrors([])
+    setRegistrationComplete(false)
+  }
+
+  return (
+    <div>
+      <Header />
+
+      <main className="main-content">
+        <section className="section-header"> </section>
+
+        <ErrorBox errors={errors} />
+
+{currentStep === "activity" && (
+  <>
+    <section className="section-header">
+      <h2 className="section-title">Seleccione una actividad</h2>
+      <p className="section-description">Elija entre las actividades disponibles y siga los pasos para reservar.</p>
+    </section>
+
+    <div className="activities-grid">
+      {loading ? (
+        <Spinner />
+      ) : (
+        activities.map((activity) => (
+          <ActivityCard
+            key={activity.id}
+            activity={activity}
+            onSelect={handleActivitySelect}
+            selected={selectedActivity?.id === activity.id}
+          />
+        ))
+      )}
+    </div>
+  </>
+)}
+
+{currentStep === "timeslot" && selectedActivity && (
+  <div style={{ marginTop: 24 }}>
+    <h3 className="section-title">Seleccione la fecha</h3>
+    <p className="section-description">Elija el día en que desea realizar la actividad</p>
+
+    <div style={{ marginTop: 12 }}>
+      <label className="form-label">Fecha</label>
+      <input
+        type="date"
+        className="form-input"
+        min={minDateForInput()}
+        value={selectedDate || ""}
+        onChange={(e) => handleDateChange(e.target.value)}
+      />
+    </div>
+
+    {selectedDate && (
+      <div style={{ marginTop: 20 }}>
+        <h4 className="section-title">Horarios disponibles para {selectedActivity.name}</h4>
+        <p className="section-description">Seleccione el horario que prefiera</p>
+
+        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 12, marginTop: 12 }}>
+          {timeSlots.length === 0 ? (
+            <div className="badge badge-muted">No hay horarios para la fecha seleccionada</div>
+          ) : (
+            timeSlots.map((slot) => (
+              <TimeSlotCard
+                key={slot.id}
+                slot={slot}
+                onSelect={handleTimeSlotSelect}
+                selected={selectedTimeSlot?.id === slot.id}
+              />
+            ))
+          )}
+        </div>
+      </div>
+    )}
+  </div>
+)}
+
+{currentStep === "participants" && selectedActivity && selectedTimeSlot && (
+  <ParticipantsForm
+    participants={participants}
+    onChange={handleParticipantChange}
+    onCountChange={handleParticipantCountChange}
+    selectedTimeSlot={selectedTimeSlot}
+    selectedActivity={selectedActivity}
+  />
+)}
+
+{currentStep === "terms" && selectedActivity && (
+  <TermsSection selectedActivity={selectedActivity} termsAccepted={termsAccepted} onToggle={setTermsAccepted} />
+)}
+
+<ConfirmationModal
+  open={currentStep === "confirmation" && registrationComplete}
+  onClose={handleReset}
+  selectedActivity={selectedActivity}
+  selectedTimeSlot={selectedTimeSlot}
+  selectedDate={selectedDate}
+  participants={participants}
+/>
+
+{currentStep !== "confirmation" && (
+  <div style={{ marginTop: 24, display: "flex", justifyContent: "space-between", gap: 12 }} className="form-actions">
+    <button className="btn btn-secondary" onClick={handleBack} disabled={currentStep === "activity"}>
+      Anterior
+    </button>
+
+    {currentStep !== "terms" ? (
+      <button className="btn btn-primary" onClick={handleNext}>
+        Siguiente
+      </button>
+    ) : (
+      <button className="btn btn-primary" onClick={handleSubmit}>
+        Confirmar inscripción
+      </button>
+    )}
+  </div>
+)}
+
+
+      </main>
+    </div>
+  )
+}
