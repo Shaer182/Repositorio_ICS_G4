@@ -26,5 +26,4 @@ public class EcoHarmonyParkBackApplication {
         System.out.printf("Local url: http://localhost:%s%s\n", env.getProperty("server.port"), swaggerPath);
         System.out.printf("%s", newLines);
     }
-
 }

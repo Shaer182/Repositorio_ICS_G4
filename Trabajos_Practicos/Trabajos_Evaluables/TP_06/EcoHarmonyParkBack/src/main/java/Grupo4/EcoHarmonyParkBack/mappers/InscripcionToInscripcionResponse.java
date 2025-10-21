@@ -34,6 +34,7 @@ public class InscripcionToInscripcionResponse implements Function<Inscripcion, I
                 .cantidadPersonas(inscripcion.getCantidadPersonas())
                 .visitantes(visitantes)
                 .horario(horario)
+                .email(inscripcion.getEmail())
                 .build();
     }
 }

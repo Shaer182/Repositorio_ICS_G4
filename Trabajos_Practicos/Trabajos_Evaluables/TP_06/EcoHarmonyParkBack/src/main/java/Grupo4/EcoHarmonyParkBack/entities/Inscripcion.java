@@ -32,4 +32,7 @@ public class Inscripcion {
 
     @OneToMany(mappedBy = "inscripcion", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Grupo> grupos;
+
+    @Column(name = "email")
+    private String email;
 }

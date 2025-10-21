@@ -38,6 +38,16 @@ public class InscripcionService {
 
     @Transactional
     public InscripcionResponse inscribirActividad(InscripcionRequest request) {
+        // Validar email
+        if (request.getEmail() == null || request.getEmail().isBlank()) {
+            throw new RuntimeException("El correo electrónico es obligatorio.");
+        }
+
+        String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
+        if (!request.getEmail().matches(emailRegex)) {
+            throw new RuntimeException("El correo electrónico ingresado no es válido.");
+        }
+
         // Buscar el horario
         HorarioActividad horario = horarioRepository.findById(request.getHorarioActividadId())
                 .orElseThrow(() -> new RuntimeException("Horario no encontrado"));
@@ -62,6 +72,7 @@ public class InscripcionService {
                 .horarioActividad(horario)
                 .cantidadPersonas(cantidadSolicitada)
                 .fechaInscripcion(LocalDateTime.now())
+                .email(request.getEmail())
                 .build();
 
         List<Grupo> grupos = new ArrayList<>();

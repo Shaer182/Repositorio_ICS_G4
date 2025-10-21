@@ -3,6 +3,7 @@ package Grupo4.EcoHarmonyParkBack.controllers;
 import Grupo4.EcoHarmonyParkBack.dtos.ActividadResponse;
 import Grupo4.EcoHarmonyParkBack.dtos.InscripcionRequest;
 import Grupo4.EcoHarmonyParkBack.dtos.InscripcionResponse;
+import Grupo4.EcoHarmonyParkBack.services.EmailService;
 import Grupo4.EcoHarmonyParkBack.services.InscripcionService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class InscripcionController {
     private final InscripcionService inscripcionService;
+    private final EmailService emailService;
 
     @GetMapping
     public ResponseEntity<List<InscripcionResponse>> obtenerInscripciones(){
@@ -33,6 +35,8 @@ public class InscripcionController {
     @PostMapping
     public ResponseEntity<InscripcionResponse> inscribirActividad(@RequestBody InscripcionRequest request) {
         InscripcionResponse response = inscripcionService.inscribirActividad(request);
+        emailService.enviarConfirmacionInscripcion(response.getEmail(), response);
+
         return ResponseEntity.ok(response);
     }
 }

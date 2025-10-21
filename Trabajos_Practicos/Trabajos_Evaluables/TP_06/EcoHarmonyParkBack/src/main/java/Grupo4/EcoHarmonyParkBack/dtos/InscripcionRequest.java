@@ -1,6 +1,8 @@
 package Grupo4.EcoHarmonyParkBack.dtos;
 
 import java.util.List;
+
+import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,4 +16,5 @@ public class InscripcionRequest {
     private List<VisitanteRequest> visitantes;
     private Long horarioActividadId;
     private int cantidadPersonas;
+    private String email;
 }
