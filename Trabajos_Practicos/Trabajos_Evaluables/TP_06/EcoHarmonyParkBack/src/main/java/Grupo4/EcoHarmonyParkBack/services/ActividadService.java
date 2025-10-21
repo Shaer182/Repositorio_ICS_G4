@@ -18,6 +18,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,9 +28,12 @@ public class ActividadService {
     private final ActividadRepository actividadRepository;
     private final HorarioActividadRepository horarioRepository;
 
-    public List<ActividadResponse> obtenerActividades(){
+    public List<ActividadResponse> obtenerActividades() {
         return this.actividadRepository.findAll()
-                .stream().map(new ActividadToActividadResponse()).toList();
+                .stream()
+                .sorted(Comparator.comparing(Actividad::getNombre))
+                .map(new ActividadToActividadResponse())
+                .toList();
     }
 
     public List<HorarioResponse> obtenerHorarios(Long actividadId, LocalDate fecha) {
@@ -59,7 +63,9 @@ public class ActividadService {
                     .toList();
         }
 
+        // Ordenar los horarios por horaInicio antes de mapearlos
         return horarios.stream()
+                .sorted(Comparator.comparing(HorarioActividad::getHoraInicio))
                 .map(new HorarioToHorarioResponse())
                 .toList();
     }

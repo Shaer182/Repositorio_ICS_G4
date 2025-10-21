@@ -1,5 +1,6 @@
 package Grupo4.EcoHarmonyParkBack.mappers;
 
+import Grupo4.EcoHarmonyParkBack.dtos.HorarioResponse;
 import Grupo4.EcoHarmonyParkBack.dtos.InscripcionResponse;
 import Grupo4.EcoHarmonyParkBack.dtos.VisitanteResponse;
 import Grupo4.EcoHarmonyParkBack.entities.Inscripcion;
@@ -25,11 +26,14 @@ public class InscripcionToInscripcionResponse implements Function<Inscripcion, I
                 })
                 .collect(Collectors.toList());
 
+        HorarioResponse horario = new HorarioToHorarioResponse().apply(inscripcion.getHorarioActividad());
+
         return InscripcionResponse.builder()
                 .id(inscripcion.getId())
                 .fechaInscripcion(inscripcion.getFechaInscripcion())
                 .cantidadPersonas(inscripcion.getCantidadPersonas())
                 .visitantes(visitantes)
+                .horario(horario)
                 .build();
     }
 }

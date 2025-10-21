@@ -17,4 +17,5 @@ public class InscripcionResponse {
     private LocalDateTime fechaInscripcion;
     private int cantidadPersonas;
     private List<VisitanteResponse> visitantes;
+    private HorarioResponse horario;
 }
