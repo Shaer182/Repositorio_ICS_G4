@@ -27,7 +27,7 @@ import {
   ConfirmationModal
 } from "./ActivityComponents"
 
-import { registerForActivity } from "../lib/api" 
+import { registerForActivity } from "../lib/api"
 
 
 // ---------------------------
@@ -163,10 +163,11 @@ export function ActivityRegistrationForm() {
   }
 
   const handleParticipantChange = (index: number, field: keyof Participant, value: string) => {
-    const newParticipants = [...participants]
-    newParticipants[index] = { ...newParticipants[index], [field]: value }
-    setParticipants(newParticipants)
-  }
+    const newParticipants = [...participants];
+    newParticipants[index] = { ...newParticipants[index], [field]: value };
+    setParticipants(newParticipants);
+  };
+
 
   const validateStep = (step: Step): boolean => {
     const newErrors: string[] = []
@@ -183,8 +184,45 @@ export function ActivityRegistrationForm() {
       case "participants":
         if (participantCount < 1) newErrors.push("Debe haber al menos un participante")
         if (selectedTimeSlot && participantCount > selectedTimeSlot.availableSpots) newErrors.push(`Solo hay ${selectedTimeSlot.availableSpots} cupos disponibles`)
-
+        const nameRegex = /^[\p{L} '\-]+$/u;
+        const dniRegex = /^\d{8}$/;
         participants.forEach((p, i) => {
+          const idx = i + 1;
+          const nombre = (p.name || "").trim();
+          const dni = (p.dni || "").trim();
+          const edadStr = (p.age || "").trim();
+
+          // Nombre
+          if (!nombre) {
+            newErrors.push(`Participante ${idx}: El nombre es requerido`);
+          } else if (!nameRegex.test(nombre)) {
+            newErrors.push(`Participante ${idx}: El nombre debe contener solo letras, espacios, guiones o apóstrofes`);
+          }
+
+          // DNI
+          if (!dni) {
+            newErrors.push(`Participante ${idx}: El DNI es requerido`);
+          } else if (!dniRegex.test(dni)) {
+            newErrors.push(`Participante ${idx}: El DNI debe tener exactamente 8 dígitos`);
+          }
+
+          // Edad
+          if (!edadStr) {
+            newErrors.push(`Participante ${idx}: La edad es requerida`);
+          } else {
+            const edadNum = Number(edadStr);
+            if (!Number.isFinite(edadNum) || !Number.isInteger(edadNum)) {
+              newErrors.push(`Participante ${idx}: La edad debe ser un número entero`);
+            } else if (edadNum <= 0 || edadNum >= 99) {
+              newErrors.push(`Participante ${idx}: La edad debe ser mayor a 0 y menor a 99`);
+            }
+          }
+
+          // Talla si aplica
+          if (selectedActivity?.requiereVestimenta && !p.clothingSize) {
+            newErrors.push(`Participante ${idx}: La talla de vestimenta es requerida para esta actividad`);
+          }
+
           if (!p.name.trim()) newErrors.push(`Participante ${i + 1}: El nombre es requerido`)
           if (!p.dni.trim()) newErrors.push(`Participante ${i + 1}: El DNI es requerido`)
           if (!p.age.trim()) newErrors.push(`Participante ${i + 1}: La edad es requerida`)
@@ -216,73 +254,73 @@ export function ActivityRegistrationForm() {
     }
   }
 
-const handleSubmit = async () => {
-  // Validar términos y pasos
-  if (!validateStep("terms")) return;
-  if (!selectedActivity || !selectedTimeSlot || !selectedDate) return;
+  const handleSubmit = async () => {
+    // Validar términos y pasos
+    if (!validateStep("terms")) return;
+    if (!selectedActivity || !selectedTimeSlot || !selectedDate) return;
 
-  // Construir visitantes (validar edades como número)
-  const visitantesPayload = participants.map((p, i) => {
-    const edadNum = Number(p.age);
-    return {
-      nombre: p.name.trim(),
-      dni: p.dni.trim(),
-      edad: Number.isFinite(edadNum) && edadNum > 0 ? edadNum : 0, // si backend exige >0 podés validar antes
-      tallaVestimenta: p.clothingSize ? p.clothingSize : null,
+    // Construir visitantes (validar edades como número)
+    const visitantesPayload = participants.map((p, i) => {
+      const edadNum = Number(p.age);
+      return {
+        nombre: p.name.trim(),
+        dni: p.dni.trim(),
+        edad: Number.isFinite(edadNum) && edadNum > 0 ? edadNum : 0, // si backend exige >0 podés validar antes
+        tallaVestimenta: p.clothingSize ? p.clothingSize : null,
+      };
+    });
+
+    // Asegurar horarioActividadId como número (usa raw.id si existe)
+    const horarioIdFromRaw =
+      selectedTimeSlot.raw && (selectedTimeSlot.raw as any).id
+        ? Number((selectedTimeSlot.raw as any).id)
+        : Number(selectedTimeSlot.id);
+
+    const inscripcionRequest = {
+      visitantes: visitantesPayload,
+      horarioActividadId: horarioIdFromRaw,
+      cantidadPersonas: visitantesPayload.length,
     };
-  });
 
-  // Asegurar horarioActividadId como número (usa raw.id si existe)
-  const horarioIdFromRaw =
-    selectedTimeSlot.raw && (selectedTimeSlot.raw as any).id
-      ? Number((selectedTimeSlot.raw as any).id)
-      : Number(selectedTimeSlot.id);
+    setSubmitting(true);
+    setErrors([]);
 
-  const inscripcionRequest = {
-    visitantes: visitantesPayload,
-    horarioActividadId: horarioIdFromRaw,
-    cantidadPersonas: visitantesPayload.length,
-  };
-
-  setSubmitting(true);
-  setErrors([]);
-
-  try {
-    const result = await registerForActivity(inscripcionRequest);
-
-    if (!result.success) {
-      setErrors([result.message || "Error al procesar la inscripción"]);
-      return;
-    }
-
-    // Éxito: el backend probablemente devuelve el InscripcionResponse; lo tenés en result.data
-    setRegistrationComplete(true);
-    setCurrentStep("confirmation");
-
-    // Opcional: refrescar horarios para actualizar cupos disponibles
     try {
-      if (selectedActivity && selectedDate) {
-        const horarios = await fetchHorarios(selectedActivity.id, selectedDate);
-        const mapped = horarios.map((h) => ({
-          id: String(h.id),
-          time: h.horaInicio ? `${h.horaInicio}${h.horaFin ? ` - ${h.horaFin}` : ""}` : "",
-          date: h.fecha,
-          availableSpots: h.cuposDisponibles,
-          isAvailable: h.cuposDisponibles > 0,
-          raw: h,
-        }));
-        setTimeSlots(mapped);
+      const result = await registerForActivity(inscripcionRequest);
+
+      if (!result.success) {
+        setErrors([result.message || "Error al procesar la inscripción"]);
+        return;
       }
-    } catch (e) {
-      console.warn("No se pudo refrescar horarios tras inscripción", e);
+
+      // Éxito: el backend probablemente devuelve el InscripcionResponse; lo tenés en result.data
+      setRegistrationComplete(true);
+      setCurrentStep("confirmation");
+
+      // Opcional: refrescar horarios para actualizar cupos disponibles
+      try {
+        if (selectedActivity && selectedDate) {
+          const horarios = await fetchHorarios(selectedActivity.id, selectedDate);
+          const mapped = horarios.map((h) => ({
+            id: String(h.id),
+            time: h.horaInicio ? `${h.horaInicio}${h.horaFin ? ` - ${h.horaFin}` : ""}` : "",
+            date: h.fecha,
+            availableSpots: h.cuposDisponibles,
+            isAvailable: h.cuposDisponibles > 0,
+            raw: h,
+          }));
+          setTimeSlots(mapped);
+        }
+      } catch (e) {
+        console.warn("No se pudo refrescar horarios tras inscripción", e);
+      }
+    } catch (err) {
+      console.error(err);
+      setErrors(["Error de conexión. Por favor, intente nuevamente."]);
+    } finally {
+      setSubmitting(false);
     }
-  } catch (err) {
-    console.error(err);
-    setErrors(["Error de conexión. Por favor, intente nuevamente."]);
-  } finally {
-    setSubmitting(false);
-  }
-};
+  };
 
 
 
@@ -308,111 +346,111 @@ const handleSubmit = async () => {
 
         <ErrorBox errors={errors} />
 
-{currentStep === "activity" && (
-  <>
-    <section className="section-header">
-      <h2 className="section-title">Seleccione una actividad</h2>
-      <p className="section-description">Elija entre las actividades disponibles y siga los pasos para reservar.</p>
-    </section>
+        {currentStep === "activity" && (
+          <>
+            <section className="section-header">
+              <h2 className="section-title">Seleccione una actividad</h2>
+              <p className="section-description">Elija entre las actividades disponibles y siga los pasos para reservar.</p>
+            </section>
 
-    <div className="activities-grid">
-      {loading ? (
-        <Spinner />
-      ) : (
-        activities.map((activity) => (
-          <ActivityCard
-            key={activity.id}
-            activity={activity}
-            onSelect={handleActivitySelect}
-            selected={selectedActivity?.id === activity.id}
-          />
-        ))
-      )}
-    </div>
-  </>
-)}
+            <div className="activities-grid">
+              {loading ? (
+                <Spinner />
+              ) : (
+                activities.map((activity) => (
+                  <ActivityCard
+                    key={activity.id}
+                    activity={activity}
+                    onSelect={handleActivitySelect}
+                    selected={selectedActivity?.id === activity.id}
+                  />
+                ))
+              )}
+            </div>
+          </>
+        )}
 
-{currentStep === "timeslot" && selectedActivity && (
-  <div style={{ marginTop: 24 }}>
-    <h3 className="section-title">Seleccione la fecha</h3>
-    <p className="section-description">Elija el día en que desea realizar la actividad</p>
+        {currentStep === "timeslot" && selectedActivity && (
+          <div style={{ marginTop: 24 }}>
+            <h3 className="section-title">Seleccione la fecha</h3>
+            <p className="section-description">Elija el día en que desea realizar la actividad</p>
 
-    <div style={{ marginTop: 12 }}>
-      <label className="form-label">Fecha</label>
-      <input
-        type="date"
-        className="form-input"
-        min={minDateForInput()}
-        value={selectedDate || ""}
-        onChange={(e) => handleDateChange(e.target.value)}
-      />
-    </div>
-
-    {selectedDate && (
-      
-      <div style={{ marginTop: 20 }}>
-        <h4 className="section-title">Horarios disponibles para {selectedActivity.name}</h4>
-        <p className="section-description">Seleccione el horario que prefiera</p>
-
-        <div className="activities-grid">
-          {timeSlots.length === 0 ? (
-            <div className="badge badge-muted">No hay horarios para la fecha seleccionada</div>
-          ) : (
-            timeSlots.map((slot) => (
-              <TimeSlotCard
-                key={slot.id}
-                slot={slot}
-                onSelect={handleTimeSlotSelect}
-                selected={selectedTimeSlot?.id === slot.id}
+            <div style={{ marginTop: 12 }}>
+              <label className="form-label">Fecha</label>
+              <input
+                type="date"
+                className="form-input"
+                min={minDateForInput()}
+                value={selectedDate || ""}
+                onChange={(e) => handleDateChange(e.target.value)}
               />
-            ))
-          )}
-        </div>
-      </div>
-    )}
-  </div>
-)}
+            </div>
 
-{currentStep === "participants" && selectedActivity && selectedTimeSlot && (
-  <ParticipantsForm
-    participants={participants}
-    onChange={handleParticipantChange}
-    onCountChange={handleParticipantCountChange}
-    selectedTimeSlot={selectedTimeSlot}
-    selectedActivity={selectedActivity}
-  />
-)}
+            {selectedDate && (
 
-{currentStep === "terms" && selectedActivity && (
-  <TermsSection selectedActivity={selectedActivity} termsAccepted={termsAccepted} onToggle={setTermsAccepted} />
-)}
+              <div style={{ marginTop: 20 }}>
+                <h4 className="section-title">Horarios disponibles para {selectedActivity.name}</h4>
+                <p className="section-description">Seleccione el horario que prefiera</p>
 
-<ConfirmationModal
-  open={currentStep === "confirmation" && registrationComplete}
-  onClose={handleReset}
-  selectedActivity={selectedActivity}
-  selectedTimeSlot={selectedTimeSlot}
-  selectedDate={selectedDate}
-  participants={participants}
-/>
+                <div className="activities-grid">
+                  {timeSlots.length === 0 ? (
+                    <div className="badge badge-muted">No hay horarios para la fecha seleccionada</div>
+                  ) : (
+                    timeSlots.map((slot) => (
+                      <TimeSlotCard
+                        key={slot.id}
+                        slot={slot}
+                        onSelect={handleTimeSlotSelect}
+                        selected={selectedTimeSlot?.id === slot.id}
+                      />
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
-{currentStep !== "confirmation" && (
-  <div style={{ marginTop: 24, display: "flex", justifyContent: "space-between", gap: 12 }} className="form-actions">
-    <button className="btn btn-secondary" onClick={handleBack} disabled={currentStep === "activity"}>
-      Anterior
-    </button>
+        {currentStep === "participants" && selectedActivity && selectedTimeSlot && (
+          <ParticipantsForm
+            participants={participants}
+            onChange={handleParticipantChange}
+            onCountChange={handleParticipantCountChange}
+            selectedTimeSlot={selectedTimeSlot}
+            selectedActivity={selectedActivity}
+          />
+        )}
 
-    {currentStep !== "terms" ? (
-      <button className="btn btn-primary" onClick={handleNext}>
-        Siguiente
-      </button>
-    ) : (
-      <button className="btn btn-primary" onClick={handleSubmit}>
-        Confirmar inscripción
-      </button>
-    )}
-  </div>
-)}
+        {currentStep === "terms" && selectedActivity && (
+          <TermsSection selectedActivity={selectedActivity} termsAccepted={termsAccepted} onToggle={setTermsAccepted} />
+        )}
+
+        <ConfirmationModal
+          open={currentStep === "confirmation" && registrationComplete}
+          onClose={handleReset}
+          selectedActivity={selectedActivity}
+          selectedTimeSlot={selectedTimeSlot}
+          selectedDate={selectedDate}
+          participants={participants}
+        />
+
+        {currentStep !== "confirmation" && (
+          <div style={{ marginTop: 24, display: "flex", justifyContent: "space-between", gap: 12 }} className="form-actions">
+            <button className="btn btn-secondary" onClick={handleBack} disabled={currentStep === "activity"}>
+              Anterior
+            </button>
+
+            {currentStep !== "terms" ? (
+              <button className="btn btn-primary" onClick={handleNext}>
+                Siguiente
+              </button>
+            ) : (
+              <button className="btn btn-primary" onClick={handleSubmit}>
+                Confirmar inscripción
+              </button>
+            )}
+          </div>
+        )}
 
 
       </main>
