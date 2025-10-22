@@ -11,9 +11,13 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -38,16 +42,6 @@ public class InscripcionService {
 
     @Transactional
     public InscripcionResponse inscribirActividad(InscripcionRequest request) {
-        // Validar email
-        if (request.getEmail() == null || request.getEmail().isBlank()) {
-            throw new RuntimeException("El correo electrónico es obligatorio.");
-        }
-
-        String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
-        if (!request.getEmail().matches(emailRegex)) {
-            throw new RuntimeException("El correo electrónico ingresado no es válido.");
-        }
-
         // Buscar el horario
         HorarioActividad horario = horarioRepository.findById(request.getHorarioActividadId())
                 .orElseThrow(() -> new RuntimeException("Horario no encontrado"));
@@ -56,11 +50,30 @@ public class InscripcionService {
         boolean requiereTalla = actividad.isRequiereVestimenta();
         int edadMinima = actividad.getEdadMinima();
 
+        // Validar coherencia entre cantidad y lista de visitantes
+        if (request.getCantidadPersonas() != request.getVisitantes().size()) {
+            throw new RuntimeException("La cantidad de personas no coincide con la cantidad de visitantes ingresados.");
+        }
+
         // Validar cupos disponibles
         int cantidadSolicitada = request.getCantidadPersonas();
         if (horario.getCuposDisponibles() < cantidadSolicitada) {
             throw new RuntimeException("No hay cupos suficientes para este horario. Cupos disponibles: "
                     + horario.getCuposDisponibles());
+        }
+
+        // Validar fecha y hora del horario
+        if (horario.getFecha().isBefore(LocalDate.now()) ||
+                (horario.getFecha().isEqual(LocalDate.now()) && horario.getHoraInicio().isBefore(LocalTime.now()))) {
+            throw new RuntimeException("No se puede inscribir a un horario que ya ha pasado.");
+        }
+
+        // Evitar duplicados dentro del mismo request
+        Set<String> dnisUnicos = new HashSet<>();
+        for (VisitanteRequest vr : request.getVisitantes()) {
+            if (!dnisUnicos.add(vr.getDni())) {
+                throw new RuntimeException("El visitante con DNI " + vr.getDni() + " está duplicado en la inscripción.");
+            }
         }
 
         // Descontar los cupos

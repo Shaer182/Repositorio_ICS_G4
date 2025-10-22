@@ -1,13 +1,14 @@
 package Grupo4.EcoHarmonyParkBack.controllers;
 
-import Grupo4.EcoHarmonyParkBack.dtos.ActividadResponse;
 import Grupo4.EcoHarmonyParkBack.dtos.InscripcionRequest;
 import Grupo4.EcoHarmonyParkBack.dtos.InscripcionResponse;
 import Grupo4.EcoHarmonyParkBack.services.EmailService;
 import Grupo4.EcoHarmonyParkBack.services.InscripcionService;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,6 +17,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/inscripciones")
 @RequiredArgsConstructor
+@Validated
 public class InscripcionController {
     private final InscripcionService inscripcionService;
     private final EmailService emailService;
@@ -33,7 +35,9 @@ public class InscripcionController {
     }
 
     @PostMapping
-    public ResponseEntity<InscripcionResponse> inscribirActividad(@RequestBody InscripcionRequest request) {
+    public ResponseEntity<InscripcionResponse> inscribirActividad(
+            @Valid @RequestBody InscripcionRequest request
+    ) {
         InscripcionResponse response = inscripcionService.inscribirActividad(request);
         emailService.enviarConfirmacionInscripcion(response.getEmail(), response);
 
