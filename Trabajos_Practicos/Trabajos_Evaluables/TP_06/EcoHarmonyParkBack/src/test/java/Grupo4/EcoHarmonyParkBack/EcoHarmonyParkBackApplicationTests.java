@@ -20,6 +20,8 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 import Grupo4.EcoHarmonyParkBack.repositories.InscripcionRepository;
@@ -53,13 +55,19 @@ class EcoHarmonyParkBackApplicationTests {
                 .id(1L)
                 .nombre("Escalada")
                 .requiereVestimenta(true)
+                .edadMinima(18)
                 .build();
 
         // Simular horario con cupos
         horario = HorarioActividad.builder()
                 .id(3L)
                 .actividad(actividad)
+                .horaInicio(LocalTime.of(10, 0))
+                .horaFin(LocalTime.of(12, 0))
+                .fecha(LocalDate.of(2025, 11, 20))
+//                .cupoMaximo(10)
                 .cuposDisponibles(5)
+
                 .build();
 
         when(horarioRepository.findById(3L)).thenReturn(Optional.of(horario));
@@ -274,7 +282,7 @@ class EcoHarmonyParkBackApplicationTests {
 
         InscripcionRequest request = new InscripcionRequest();
         request.setHorarioActividadId(3L);
-        request.setCantidadPersonas(2);
+        request.setCantidadPersonas(1);
         request.setVisitantes(visitantes);
 
         // ---  Mockear comportamiento del repositorio ---
@@ -298,7 +306,7 @@ class EcoHarmonyParkBackApplicationTests {
             resultado = false;
         }
 		try {
-			assertEquals(true, resultado);
+			assertEquals(false, resultado);
 			System.out.println("Test de inscripcion siendo menor de edad pasado");
 		} catch (AssertionError e) {
 			System.err.println("Test de inscripcion siendo menor de edad fallido: " + e.getMessage());
