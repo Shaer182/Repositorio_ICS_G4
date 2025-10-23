@@ -98,6 +98,7 @@ name: string
 dni: string
 age: string
 clothingSize?: string
+email: string;
 }
 
 

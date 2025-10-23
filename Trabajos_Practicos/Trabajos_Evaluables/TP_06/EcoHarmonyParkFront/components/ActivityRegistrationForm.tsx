@@ -43,7 +43,7 @@ export function ActivityRegistrationForm() {
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([])
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<TimeSlot | null>(null)
   const [participantCount, setParticipantCount] = useState<number>(1)
-  const [participants, setParticipants] = useState<Participant[]>([{ name: "", dni: "", age: "", clothingSize: "" }])
+  const [participants, setParticipants] = useState<Participant[]>([{ name: "", dni: "", age: "", clothingSize: "", email: "" }])
   const [termsAccepted, setTermsAccepted] = useState(false)
   const [errors, setErrors] = useState<string[]>([])
   const [registrationComplete, setRegistrationComplete] = useState(false)
@@ -100,19 +100,21 @@ export function ActivityRegistrationForm() {
     setTimeSlots([])
     setErrors([])
     setParticipantCount(1)
-    setParticipants([{ name: "", dni: "", age: "", clothingSize: "" }])
+    setParticipants([{ name: "", dni: "", age: "", clothingSize: "", email: ""}])
     // remain in same step; user will click Siguiente to go to timeslot
   }
 
   const handleDateChange = async (dateValue: string) => {
     if (!dateValue) return
 
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const selectedDateObj = new Date(dateValue)
-    selectedDateObj.setHours(0, 0, 0, 0)
+      const today = new Date();
+      today.setHours(0,0,0,0);
 
-    if (selectedDateObj < today) {
+      // dateValue = "2025-10-22"
+      const [y, m, d] = dateValue.split('-');
+      const selectedDateObj = new Date(Number(y), Number(m) -1, Number(d));
+
+    if (selectedDateObj < (today)) {
       setErrors(["No puede seleccionar una fecha anterior a hoy"])
       return
     }
@@ -157,7 +159,7 @@ export function ActivityRegistrationForm() {
     }
 
     setParticipantCount(count)
-    const newParticipants = Array.from({ length: count }, (_, i) => participants[i] || { name: "", dni: "", age: "", clothingSize: "" })
+    const newParticipants = Array.from({ length: count }, (_, i) => participants[i] || { name: "", dni: "", age: "", clothingSize: "", email: ""})
     setParticipants(newParticipants)
     setErrors([])
   }
@@ -187,10 +189,12 @@ export function ActivityRegistrationForm() {
         const nameRegex = /^[\p{L} '\-]+$/u;
         const dniRegex = /^\d{8}$/;
         participants.forEach((p, i) => {
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
           const idx = i + 1;
           const nombre = (p.name || "").trim();
           const dni = (p.dni || "").trim();
           const edadStr = (p.age || "").trim();
+          const email = (p.email || "").trim();
 
           // Nombre
           if (!nombre) {
@@ -205,6 +209,9 @@ export function ActivityRegistrationForm() {
           } else if (!dniRegex.test(dni)) {
             newErrors.push(`Participante ${idx}: El DNI debe tener exactamente 8 dígitos`);
           }
+            // Email (nuevo)
+          if (!email) newErrors.push(`Participante ${idx}: El email es requerido`);
+          else if (!emailRegex.test(email)) newErrors.push(`Participante ${idx}: El email no tiene un formato válido`);
 
           // Edad
           if (!edadStr) {
@@ -256,19 +263,23 @@ export function ActivityRegistrationForm() {
 
   const handleSubmit = async () => {
     // Validar términos y pasos
+    if (submitting) return;
     if (!validateStep("terms")) return;
     if (!selectedActivity || !selectedTimeSlot || !selectedDate) return;
 
     // Construir visitantes (validar edades como número)
-    const visitantesPayload = participants.map((p, i) => {
+    const visitantesPayload = participants.map((p) => {
       const edadNum = Number(p.age);
       return {
         nombre: p.name.trim(),
         dni: p.dni.trim(),
-        edad: Number.isFinite(edadNum) && edadNum > 0 ? edadNum : 0, // si backend exige >0 podés validar antes
+        edad: Number.isFinite(edadNum) && edadNum > 0 ? edadNum : 0,
         tallaVestimenta: p.clothingSize ? p.clothingSize : null,
+        email: p.email.trim(),
       };
     });
+    const contactoEmail = visitantesPayload[0]?.email ?? null;
+
 
     // Asegurar horarioActividadId como número (usa raw.id si existe)
     const horarioIdFromRaw =
@@ -280,6 +291,7 @@ export function ActivityRegistrationForm() {
       visitantes: visitantesPayload,
       horarioActividadId: horarioIdFromRaw,
       cantidadPersonas: visitantesPayload.length,
+      email: contactoEmail,
     };
 
     setSubmitting(true);
@@ -331,7 +343,7 @@ export function ActivityRegistrationForm() {
     setSelectedTimeSlot(null)
     setTimeSlots([])
     setParticipantCount(1)
-    setParticipants([{ name: "", dni: "", age: "", clothingSize: "" }])
+    setParticipants([{ name: "", dni: "", age: "", clothingSize: "", email: "" }])
     setTermsAccepted(false)
     setErrors([])
     setRegistrationComplete(false)

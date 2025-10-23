@@ -87,9 +87,10 @@ export type ApiResult<T = any> = {
 };
 
 export async function registerForActivity(inscripcionRequest: {
-  visitantes: { nombre: string; dni: string; edad: number; tallaVestimenta: string | null }[];
+  visitantes: { nombre: string; dni: string; edad: number; tallaVestimenta: string | null, email: string | null }[];
   horarioActividadId: number;
   cantidadPersonas: number;
+  email?: string | null;
 }): Promise<ApiResult<any>> {
   try {
     const response = await fetch(`${API_BASE_URL}/inscripciones`, {

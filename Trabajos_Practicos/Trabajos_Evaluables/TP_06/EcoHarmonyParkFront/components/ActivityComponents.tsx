@@ -180,6 +180,10 @@ export function ParticipantsForm({
               <label className="form-label">Edad</label>
               <input type="number" className={`form-input ${!participant.age.trim() ? "form-input-error" : ""}`} value={participant.age} onChange={(e) => onChange(index, "age", e.target.value)} placeholder="Ej: 25" />
             </div>
+                        <div className="form-group">
+              <label className="form-label">Email</label>
+              <input className={`form-input ${!participant.email.trim() ? "form-input-error" : ""}`} value={participant.email} onChange={(e) => onChange(index, "email", e.target.value)} placeholder="Ej: JuanPérez@gmail.com" />
+            </div>
 
             {selectedActivity?.requiereVestimenta && (
               <div className="form-group">
