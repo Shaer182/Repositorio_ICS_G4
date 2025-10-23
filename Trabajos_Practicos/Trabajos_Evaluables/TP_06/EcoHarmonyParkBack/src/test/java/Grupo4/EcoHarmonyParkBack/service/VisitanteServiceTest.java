@@ -20,8 +20,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 /**
- * Unit tests for VisitanteService
- * Tests visitor creation and update logic
+ * Pruebas unitarias para VisitanteService
+ * Prueba la lógica de creación y actualización de visitantes
  */
 @ExtendWith(MockitoExtension.class)
 class VisitanteServiceTest {
@@ -53,12 +53,11 @@ class VisitanteServiceTest {
                 .build();
     }
 
-    // ==================== TESTS FOR crearVisitante - NEW VISITOR ====================
+    // ==================== PRUEBAS PARA crearVisitante - NUEVO VISITANTE ====================
 
     @Test
-    @DisplayName("Should create new visitor when DNI does not exist")
-    void shouldCreateNewVisitorWhenDniNotExists() {
-        // Arrange
+    @DisplayName("Debería crear un nuevo visitante cuando el DNI no existe")
+    void deberiaCrearNuevoVisitanteCuandoDniNoExiste() {
         when(visitanteRepository.findByDni("12345678")).thenReturn(Optional.empty());
         when(visitanteRepository.save(any(Visitante.class))).thenAnswer(invocation -> {
             Visitante visitante = invocation.getArgument(0);
@@ -66,21 +65,17 @@ class VisitanteServiceTest {
             return visitante;
         });
 
-        // Act
         Visitante result = visitanteService.crearVisitante(visitanteRequest);
 
-        // Assert
         assertNotNull(result);
         assertEquals("Juan Perez", result.getNombre());
         assertEquals("12345678", result.getDni());
         assertEquals(30, result.getEdad());
         assertEquals("M", result.getTallaVestimenta());
 
-        // Verify repository interactions
         verify(visitanteRepository, times(1)).findByDni("12345678");
         verify(visitanteRepository, times(1)).save(any(Visitante.class));
 
-        // Verify the saved visitante has correct properties
         ArgumentCaptor<Visitante> visitanteCaptor = ArgumentCaptor.forClass(Visitante.class);
         verify(visitanteRepository).save(visitanteCaptor.capture());
         Visitante savedVisitante = visitanteCaptor.getValue();
@@ -92,9 +87,8 @@ class VisitanteServiceTest {
     }
 
     @Test
-    @DisplayName("Should create visitor without clothing size when not required")
-    void shouldCreateVisitorWithoutClothingSize() {
-        // Arrange
+    @DisplayName("Debería crear un visitante sin talla de vestimenta cuando no es requerida")
+    void deberiaCrearVisitanteSinTallaDeVestimenta() {
         VisitanteRequest requestSinTalla = VisitanteRequest.builder()
                 .nombre("Maria Lopez")
                 .dni("87654321")
@@ -109,10 +103,8 @@ class VisitanteServiceTest {
             return visitante;
         });
 
-        // Act
         Visitante result = visitanteService.crearVisitante(requestSinTalla);
 
-        // Assert
         assertNotNull(result);
         assertEquals("Maria Lopez", result.getNombre());
         assertNull(result.getTallaVestimenta());
@@ -120,19 +112,16 @@ class VisitanteServiceTest {
         verify(visitanteRepository, times(1)).save(any(Visitante.class));
     }
 
-    // ==================== TESTS FOR crearVisitante - UPDATE EXISTING ====================
+    // ==================== PRUEBAS PARA crearVisitante - ACTUALIZAR EXISTENTE ====================
 
     @Test
-    @DisplayName("Should update existing visitor when DNI already exists")
-    void shouldUpdateExistingVisitorWhenDniExists() {
-        // Arrange
+    @DisplayName("Debería actualizar un visitante existente cuando el DNI ya existe")
+    void deberiaActualizarVisitanteExistenteCuandoDniExiste() {
         when(visitanteRepository.findByDni("12345678")).thenReturn(Optional.of(visitanteExistente));
         when(visitanteRepository.save(any(Visitante.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        // Act
         Visitante result = visitanteService.crearVisitante(visitanteRequest);
 
-        // Assert
         assertNotNull(result);
         assertEquals(1L, result.getId()); // Mantiene el mismo ID
         assertEquals("Juan Perez", result.getNombre()); // Nombre actualizado
@@ -145,9 +134,8 @@ class VisitanteServiceTest {
     }
 
     @Test
-    @DisplayName("Should update visitor but keep old talla when new talla is null")
-    void shouldKeepOldTallaWhenNewTallaIsNull() {
-        // Arrange
+    @DisplayName("Debería actualizar el visitante pero mantener la talla anterior cuando la nueva talla es nula")
+    void deberiaMantenerTallaAnteriorCuandoNuevaTallaEsNula() {
         VisitanteRequest requestSinTalla = VisitanteRequest.builder()
                 .nombre("Juan Perez Actualizado")
                 .dni("12345678")
@@ -158,10 +146,8 @@ class VisitanteServiceTest {
         when(visitanteRepository.findByDni("12345678")).thenReturn(Optional.of(visitanteExistente));
         when(visitanteRepository.save(any(Visitante.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        // Act
         Visitante result = visitanteService.crearVisitante(requestSinTalla);
 
-        // Assert
         assertNotNull(result);
         assertEquals("Juan Perez Actualizado", result.getNombre());
         assertEquals(31, result.getEdad());
@@ -172,9 +158,8 @@ class VisitanteServiceTest {
     }
 
     @Test
-    @DisplayName("Should update talla when new talla is provided for existing visitor")
-    void shouldUpdateTallaWhenNewTallaProvided() {
-        // Arrange
+    @DisplayName("Debería actualizar la talla cuando se proporciona una nueva talla para un visitante existente")
+    void deberiaActualizarTallaCuandoSeProporcionaNuevaTalla() {
         VisitanteRequest requestConTalla = VisitanteRequest.builder()
                 .nombre("Juan Perez Actualizado")
                 .dni("12345678")
@@ -185,10 +170,8 @@ class VisitanteServiceTest {
         when(visitanteRepository.findByDni("12345678")).thenReturn(Optional.of(visitanteExistente));
         when(visitanteRepository.save(any(Visitante.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        // Act
         Visitante result = visitanteService.crearVisitante(requestConTalla);
 
-        // Assert
         assertNotNull(result);
         assertEquals("XL", result.getTallaVestimenta()); // Talla actualizada
         assertNotEquals("S", result.getTallaVestimenta());
@@ -196,12 +179,11 @@ class VisitanteServiceTest {
         verify(visitanteRepository, times(1)).save(visitanteExistente);
     }
 
-    // ==================== EDGE CASES ====================
+    // ==================== CASOS EXTREMOS ====================
 
     @Test
-    @DisplayName("Should handle visitor with minimum valid age")
-    void shouldHandleVisitorWithMinimumAge() {
-        // Arrange
+    @DisplayName("Debería manejar un visitante con la edad mínima válida")
+    void deberiaManejarVisitanteConEdadMinima() {
         VisitanteRequest requestEdadMinima = VisitanteRequest.builder()
                 .nombre("Niño Pequeño")
                 .dni("11111111")
@@ -215,16 +197,14 @@ class VisitanteServiceTest {
             return visitante;
         });
 
-        // Act
         Visitante result = visitanteService.crearVisitante(requestEdadMinima);
 
-        // Assert
         assertEquals(1, result.getEdad());
     }
 
     @Test
-    @DisplayName("Should handle visitor with maximum valid age")
-    void shouldHandleVisitorWithMaximumAge() {
+    @DisplayName("Debería manejar un visitante con la edad máxima válida")
+    void deberiaManejarVisitanteConEdadMaxima() {
         // Arrange
         VisitanteRequest requestEdadMaxima = VisitanteRequest.builder()
                 .nombre("Persona Mayor")
@@ -239,17 +219,14 @@ class VisitanteServiceTest {
             return visitante;
         });
 
-        // Act
         Visitante result = visitanteService.crearVisitante(requestEdadMaxima);
 
-        // Assert
         assertEquals(120, result.getEdad());
     }
 
     @Test
-    @DisplayName("Should handle long visitor names")
-    void shouldHandleLongVisitorNames() {
-        // Arrange
+    @DisplayName("Debería manejar nombres largos de visitantes")
+    void deberiaManejarNombresLargosDeVisitantes() {
         String nombreLargo = "Juan Carlos Alberto Fernandez Gonzalez Martinez Rodriguez Lopez Perez";
         VisitanteRequest requestNombreLargo = VisitanteRequest.builder()
                 .nombre(nombreLargo)
@@ -264,17 +241,14 @@ class VisitanteServiceTest {
             return visitante;
         });
 
-        // Act
         Visitante result = visitanteService.crearVisitante(requestNombreLargo);
 
-        // Assert
         assertEquals(nombreLargo, result.getNombre());
     }
 
     @Test
-    @DisplayName("Should handle DNI with 7 digits")
-    void shouldHandleDniWith7Digits() {
-        // Arrange
+    @DisplayName("Debería manejar un DNI con 7 dígitos")
+    void deberiaManejarDniCon7Digitos() {
         VisitanteRequest request7Digitos = VisitanteRequest.builder()
                 .nombre("Persona DNI Corto")
                 .dni("1234567") // 7 dígitos
@@ -288,17 +262,14 @@ class VisitanteServiceTest {
             return visitante;
         });
 
-        // Act
         Visitante result = visitanteService.crearVisitante(request7Digitos);
 
-        // Assert
         assertEquals("1234567", result.getDni());
     }
 
     @Test
-    @DisplayName("Should handle DNI with 8 digits")
-    void shouldHandleDniWith8Digits() {
-        // Arrange
+    @DisplayName("Debería manejar un DNI con 8 dígitos")
+    void deberiaManejarDniCon8Digitos() {
         VisitanteRequest request8Digitos = VisitanteRequest.builder()
                 .nombre("Persona DNI Largo")
                 .dni("12345678") // 8 dígitos
@@ -312,17 +283,14 @@ class VisitanteServiceTest {
             return visitante;
         });
 
-        // Act
         Visitante result = visitanteService.crearVisitante(request8Digitos);
 
-        // Assert
         assertEquals("12345678", result.getDni());
     }
 
     @Test
-    @DisplayName("Should update all properties for existing visitor")
-    void shouldUpdateAllPropertiesForExistingVisitor() {
-        // Arrange
+    @DisplayName("Debería actualizar todas las propiedades de un visitante existente")
+    void deberiaActualizarTodasLasPropiedadesDeVisitanteExistente() {
         VisitanteRequest updateRequest = VisitanteRequest.builder()
                 .nombre("Nombre Completamente Nuevo")
                 .dni("12345678")
@@ -333,17 +301,14 @@ class VisitanteServiceTest {
         when(visitanteRepository.findByDni("12345678")).thenReturn(Optional.of(visitanteExistente));
         when(visitanteRepository.save(any(Visitante.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        // Act
         Visitante result = visitanteService.crearVisitante(updateRequest);
 
-        // Assert
         assertEquals(1L, result.getId()); // ID no cambia
         assertEquals("Nombre Completamente Nuevo", result.getNombre()); // Nombre actualizado
         assertEquals(50, result.getEdad()); // Edad actualizada
         assertEquals("XXL", result.getTallaVestimenta()); // Talla actualizada
         assertEquals("12345678", result.getDni()); // DNI igual
 
-        // Verify old values were overwritten
         assertNotEquals("Juan Perez Viejo", result.getNombre());
         assertNotEquals(28, result.getEdad());
         assertNotEquals("S", result.getTallaVestimenta());
@@ -351,9 +316,8 @@ class VisitanteServiceTest {
 
 
     @Test
-    @DisplayName("Should properly invoke repository methods in correct order")
-    void shouldInvokeRepositoryMethodsInCorrectOrder() {
-        // Arrange
+    @DisplayName("Debería invocar correctamente los métodos del repositorio en el orden correcto")
+    void deberiaInvocarMetodosDelRepositorioEnOrdenCorrecto() {
         when(visitanteRepository.findByDni("12345678")).thenReturn(Optional.empty());
         when(visitanteRepository.save(any(Visitante.class))).thenAnswer(invocation -> {
             Visitante visitante = invocation.getArgument(0);
@@ -361,10 +325,8 @@ class VisitanteServiceTest {
             return visitante;
         });
 
-        // Act
         visitanteService.crearVisitante(visitanteRequest);
 
-        // Assert - verify order of method calls
         var inOrder = inOrder(visitanteRepository);
         inOrder.verify(visitanteRepository).findByDni("12345678");
         inOrder.verify(visitanteRepository).save(any(Visitante.class));

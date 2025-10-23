@@ -34,8 +34,8 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 /**
- * Unit tests for InscripcionService
- * Tests all business logic validation scenarios for activity registration
+ * Pruebas unitarias para InscripcionService
+ * Prueba todos los escenarios de validación de la lógica de negocio para la inscripción a actividades
  */
 @ExtendWith(MockitoExtension.class)
 class InscripcionServiceTest {
@@ -53,40 +53,51 @@ class InscripcionServiceTest {
     private InscripcionService inscripcionService;
 
     private HorarioActividad horarioConCupos;
+    private Actividad actividadJardineria;
     private Actividad actividadSafari;
     private Actividad actividadTirolesa;
     private Actividad actividadPalestra;
 
     @BeforeEach
     void setUp() {
-        // Actividad sin restricciones especiales (Safari)
-        actividadSafari = Actividad.builder()
-                .id(1L)
-                .nombre("Safari")
+        actividadJardineria = Actividad.builder()
+                .id(4L)
+                .nombre("Jardinería")
                 .requiereVestimenta(false)
                 .edadMinima(0)
-                .cupoMaximo(20)
-                .descripcion("Safari por el parque")
+                .cupoMaximo(12)
+                .descripcion("Actividad práctica de plantación, riego y cuidado de plantas en el vivero del parque.")
+                .terminosCondiciones("El participante debe seguir las instrucciones del encargado y respetar las zonas delimitadas.")
                 .build();
 
-        // Actividad que requiere vestimenta (Tirolesa)
-        actividadTirolesa = Actividad.builder()
-                .id(2L)
-                .nombre("Tirolesa")
-                .requiereVestimenta(true)
-                .edadMinima(12)
-                .cupoMaximo(15)
-                .descripcion("Tirolesa aventura")
-                .build();
-
-        // Actividad con edad minima 18 (Palestra)
         actividadPalestra = Actividad.builder()
                 .id(3L)
                 .nombre("Palestra")
                 .requiereVestimenta(true)
-                .edadMinima(18)
+                .edadMinima(12)
+                .cupoMaximo(12)
+                .descripcion("Actividad de escalada en muro vertical con asistencia de un instructor.")
+                .terminosCondiciones("El participante debe usar arnés y casco provistos por el parque.")
+                .build();
+
+        actividadSafari = Actividad.builder()
+                .id(2L)
+                .nombre("Safari")
+                .requiereVestimenta(false)
+                .edadMinima(12)
+                .cupoMaximo(8)
+                .descripcion("Recorrido guiado por las zonas de animales del parque con observación educativa.")
+                .terminosCondiciones("El participante debe permanecer dentro del vehículo durante todo el recorrido.")
+                .build();
+
+        actividadTirolesa = Actividad.builder()
+                .id(1L)
+                .nombre("Tirolesa")
+                .requiereVestimenta(true)
+                .edadMinima(12)
                 .cupoMaximo(10)
-                .descripcion("Escalada en palestra")
+                .descripcion("Recorrido aéreo por cable con arnés de seguridad y casco obligatorio.")
+                .terminosCondiciones("El participante debe usar el equipo de seguridad completo y seguir las instrucciones del guía.")
                 .build();
 
         // Horario con cupos disponibles (futuro)
@@ -103,8 +114,8 @@ class InscripcionServiceTest {
     // ==================== CASO DE PRUEBA 1: INSCRIPCION CORRECTA ====================
 
     @Test
-    @DisplayName("Should successfully register when all data is valid and slots are available")
-    void shouldRegisterSuccessfullyWhenValidData() {
+    @DisplayName("Debería registrarse exitosamente cuando todos los datos sean válidos y haya espacios disponibles")
+    void deberiaRegistrarConExitoCuandoLosDatosSonValidos() {
         // Arrange
         VisitanteRequest visitante1 = VisitanteRequest.builder()
                 .nombre("Juan Perez")
@@ -128,7 +139,6 @@ class InscripcionServiceTest {
                 .edad(30)
                 .build();
 
-        // Mock repository behaviors
         when(horarioRepository.findById(1L)).thenReturn(Optional.of(horarioConCupos));
         when(inscripcionRepository.existsByHorarioAndVisitanteDni(1L, "12345678")).thenReturn(false);
         when(visitanteService.crearVisitante(any(VisitanteRequest.class))).thenReturn(visitanteEntity);
@@ -139,34 +149,28 @@ class InscripcionServiceTest {
             return inscripcion;
         });
 
-        // Act
         InscripcionResponse result = inscripcionService.inscribirActividad(request);
 
-        // Assert
         assertNotNull(result);
         assertEquals("juan@example.com", result.getEmail());
         assertEquals(1, result.getCantidadPersonas());
 
-        // Verify cupos were decremented
         verify(horarioRepository).save(argThat(horario ->
             horario.getCuposDisponibles() == 9
         ));
 
-        // Verify visitante was created
         verify(visitanteService, times(1)).crearVisitante(any(VisitanteRequest.class));
 
-        // Verify inscripcion was saved
         verify(inscripcionRepository, times(1)).save(any(Inscripcion.class));
     }
 
-    // ==================== CASO DE PRUEBA 2: DATOS FALTANTES (Jakarta Validation) ====================
-    // Note: Jakarta validation is handled at controller level with @Valid
-    // Service layer tests assume data passed validation
+    // ==================== CASO DE PRUEBA 2: DATOS FALTANTES (Validación de Jakarta) ====================
+    // Nota: La validación de Jakarta se maneja a nivel del controlador con @Valid
+    // Las pruebas de la capa de servicio asumen que los datos ya pasaron la validación
 
     @Test
-    @DisplayName("Should throw exception when horario does not exist")
-    void shouldThrowExceptionWhenHorarioNotFound() {
-        // Arrange
+    @DisplayName("Debería lanzar una excepción cuando el horario no existe")
+    void deberiaLanzarExcepcionCuandoNoSeEncuentraElHorario() {
         InscripcionRequest request = InscripcionRequest.builder()
                 .horarioActividadId(999L)
                 .cantidadPersonas(1)
@@ -181,7 +185,6 @@ class InscripcionServiceTest {
 
         when(horarioRepository.findById(999L)).thenReturn(Optional.empty());
 
-        // Act & Assert
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             inscripcionService.inscribirActividad(request);
         });
@@ -193,9 +196,8 @@ class InscripcionServiceTest {
     // ==================== CASO DE PRUEBA 3: INSCRIPCION DUPLICADA ====================
 
     @Test
-    @DisplayName("Should throw exception when visitor is already registered for the same schedule")
-    void shouldThrowExceptionWhenVisitorAlreadyRegistered() {
-        // Arrange
+    @DisplayName("Debería lanzar una excepción cuando el visitante ya está registrado en el mismo horario")
+    void deberiaLanzarExcepcionCuandoElVisitanteYaEstaRegistradoEnElMismoHorario() {
         VisitanteRequest visitante = VisitanteRequest.builder()
                 .nombre("Juan Perez")
                 .dni("12345678")
@@ -213,7 +215,6 @@ class InscripcionServiceTest {
         when(horarioRepository.findById(1L)).thenReturn(Optional.of(horarioConCupos));
         when(inscripcionRepository.existsByHorarioAndVisitanteDni(1L, "12345678")).thenReturn(true);
 
-        // Act & Assert
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             inscripcionService.inscribirActividad(request);
         });
@@ -226,9 +227,8 @@ class InscripcionServiceTest {
     // ==================== CASO DE PRUEBA 4: HORARIO CON CUPOS LLENOS ====================
 
     @Test
-    @DisplayName("Should throw exception when schedule has no available slots")
-    void shouldThrowExceptionWhenNoSlotsAvailable() {
-        // Arrange
+    @DisplayName("Debería lanzar una excepción cuando el horario no tiene cupos disponibles")
+    void deberiaLanzarExcepcionCuandoNoHayCuposDisponibles() {
         HorarioActividad horarioSinCupos = HorarioActividad.builder()
                 .id(1L)
                 .actividad(actividadSafari)
@@ -254,7 +254,6 @@ class InscripcionServiceTest {
 
         when(horarioRepository.findById(1L)).thenReturn(Optional.of(horarioSinCupos));
 
-        // Act & Assert
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             inscripcionService.inscribirActividad(request);
         });
@@ -267,9 +266,8 @@ class InscripcionServiceTest {
     // ==================== CASO DE PRUEBA 5: HORARIO SIN CUPOS SUFICIENTES ====================
 
     @Test
-    @DisplayName("Should throw exception when requested slots exceed available slots")
-    void shouldThrowExceptionWhenInsufficientSlots() {
-        // Arrange
+    @DisplayName("Debería lanzar una excepción cuando los cupos solicitados exceden los disponibles")
+    void deberiaLanzarExcepcionCuandoLosCuposSonInsuficientes() {
         HorarioActividad horarioConPococCupos = HorarioActividad.builder()
                 .id(1L)
                 .actividad(actividadSafari)
@@ -294,7 +292,6 @@ class InscripcionServiceTest {
 
         when(horarioRepository.findById(1L)).thenReturn(Optional.of(horarioConPococCupos));
 
-        // Act & Assert
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             inscripcionService.inscribirActividad(request);
         });
@@ -306,8 +303,8 @@ class InscripcionServiceTest {
     // ==================== CASO DE PRUEBA 6: NO ACEPTAR TERMINOS Y CONDICIONES ====================
 
     @Test
-    @DisplayName("Should throw exception when terms and conditions are not accepted")
-    void shouldThrowExceptionWhenTermsNotAccepted() {
+    @DisplayName("Debería lanzar una excepción cuando no se aceptan los términos y condiciones")
+    void deberiaLanzarExcepcionCuandoNoSeAceptanLosTerminosYCondiciones() {
         // Arrange
         InscripcionRequest request = InscripcionRequest.builder()
                 .horarioActividadId(1L)
@@ -321,7 +318,6 @@ class InscripcionServiceTest {
                 .aceptoTyC(false) // No acepta TyC
                 .build();
 
-        // Act & Assert
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             inscripcionService.inscribirActividad(request);
         });
@@ -334,9 +330,8 @@ class InscripcionServiceTest {
     // ==================== CASO DE PRUEBA 7: NO INGRESAR TALLA DE ROPA ====================
 
     @Test
-    @DisplayName("Should throw exception when clothing size is required but not provided")
-    void shouldThrowExceptionWhenClothingSizeRequired() {
-        // Arrange
+    @DisplayName("Debería lanzar una excepción cuando se requiere la talla de vestimenta pero no se proporciona")
+    void deberiaLanzarExcepcionCuandoSeRequiereTallaDeVestimentaPeroNoSeProporciona() {
         HorarioActividad horarioTirolesa = HorarioActividad.builder()
                 .id(2L)
                 .actividad(actividadTirolesa) // Requiere vestimenta
@@ -363,7 +358,6 @@ class InscripcionServiceTest {
 
         when(horarioRepository.findById(2L)).thenReturn(Optional.of(horarioTirolesa));
 
-        // Act & Assert
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             inscripcionService.inscribirActividad(request);
         });
@@ -373,9 +367,8 @@ class InscripcionServiceTest {
     }
 
     @Test
-    @DisplayName("Should throw exception when clothing size is empty string")
-    void shouldThrowExceptionWhenClothingSizeEmpty() {
-        // Arrange
+    @DisplayName("Debería lanzar una excepción cuando la talla de vestimenta está vacía")
+    void deberiaLanzarExcepcionCuandoLaTallaDeVestimentaEstaVacia() {
         HorarioActividad horarioTirolesa = HorarioActividad.builder()
                 .id(2L)
                 .actividad(actividadTirolesa)
@@ -402,7 +395,6 @@ class InscripcionServiceTest {
 
         when(horarioRepository.findById(2L)).thenReturn(Optional.of(horarioTirolesa));
 
-        // Act & Assert
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             inscripcionService.inscribirActividad(request);
         });
@@ -413,12 +405,11 @@ class InscripcionServiceTest {
     // ==================== CASO DE PRUEBA 8: MENOR DE EDAD ====================
 
     @Test
-    @DisplayName("Should throw exception when visitor is under minimum age")
-    void shouldThrowExceptionWhenVisitorUnderAge() {
-        // Arrange
+    @DisplayName("Debería lanzar una excepción cuando el visitante es menor a la edad mínima")
+    void deberiaLanzarExcepcionCuandoElVisitanteEsMenorALaEdadMinima() {
         HorarioActividad horarioPalestra = HorarioActividad.builder()
                 .id(3L)
-                .actividad(actividadPalestra) // Edad minima 18
+                .actividad(actividadTirolesa)
                 .fecha(LocalDate.now().plusDays(7))
                 .horaInicio(LocalTime.of(14, 0))
                 .horaFin(LocalTime.of(16, 0))
@@ -428,7 +419,7 @@ class InscripcionServiceTest {
         VisitanteRequest visitanteMenor = VisitanteRequest.builder()
                 .nombre("Pedro Martinez")
                 .dni("11111111")
-                .edad(10) // Menor de 18
+                .edad(6)
                 .tallaVestimenta("M")
                 .build();
 
@@ -442,22 +433,20 @@ class InscripcionServiceTest {
 
         when(horarioRepository.findById(3L)).thenReturn(Optional.of(horarioPalestra));
 
-        // Act & Assert
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             inscripcionService.inscribirActividad(request);
         });
 
-        assertTrue(exception.getMessage().contains("tiene 10 años"));
-        assertTrue(exception.getMessage().contains("edad mínima requerida es 18 años"));
+        assertTrue(exception.getMessage().contains("tiene 6 años"));
+        assertTrue(exception.getMessage().contains("edad mínima requerida es 12 años"));
         verify(inscripcionRepository, never()).save(any(Inscripcion.class));
     }
 
     // ==================== CASO DE PRUEBA 14: DNI DUPLICADO EN EL MISMO REQUEST ====================
 
     @Test
-    @DisplayName("Should throw exception when same DNI appears multiple times in request")
-    void shouldThrowExceptionWhenDuplicateDniInRequest() {
-        // Arrange
+    @DisplayName("Debería lanzar una excepción cuando el mismo DNI aparece varias veces en la solicitud")
+    void deberiaLanzarExcepcionCuandoElMismoDniApareceVariasVecesEnLaSolicitud() {
         List<VisitanteRequest> visitantesConDniDuplicado = Arrays.asList(
                 VisitanteRequest.builder().nombre("Juan Perez").dni("12345678").edad(30).build(),
                 VisitanteRequest.builder().nombre("Juan Perez Duplicado").dni("12345678").edad(30).build()
@@ -473,7 +462,6 @@ class InscripcionServiceTest {
 
         when(horarioRepository.findById(1L)).thenReturn(Optional.of(horarioConCupos));
 
-        // Act & Assert
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             inscripcionService.inscribirActividad(request);
         });
@@ -483,12 +471,116 @@ class InscripcionServiceTest {
         verify(inscripcionRepository, never()).save(any(Inscripcion.class));
     }
 
+    // ==================== CASOS DE PRUEBA 15: CONFLICTO DE HORARIO ====================
+
+    @Test
+    @DisplayName("Debería lanzar una excepción cuando el visitante está registrado en otra actividad con horario que se superpone")
+    void deberiaLanzarExcepcionCuandoElVisitanteTieneHorarioConflictivo() {
+        HorarioActividad nuevoHorario = HorarioActividad.builder()
+                .id(10L)
+                .actividad(actividadSafari)
+                .fecha(LocalDate.now().plusDays(2))
+                .horaInicio(LocalTime.of(10, 0))
+                .horaFin(LocalTime.of(12, 0))
+                .cuposDisponibles(10)
+                .build();
+
+        VisitanteRequest visitante = VisitanteRequest.builder()
+                .nombre("Juan Perez")
+                .dni("12345678")
+                .edad(30)
+                .build();
+
+        InscripcionRequest request = InscripcionRequest.builder()
+                .horarioActividadId(10L)
+                .cantidadPersonas(1)
+                .visitantes(List.of(visitante))
+                .email("juan@example.com")
+                .aceptoTyC(true)
+                .build();
+
+        when(horarioRepository.findById(10L)).thenReturn(Optional.of(nuevoHorario));
+        when(inscripcionRepository.existsByHorarioAndVisitanteDni(10L, "12345678")).thenReturn(false);
+        // Simula conflicto con otra actividad en la misma fecha/hora
+        when(inscripcionRepository.existsConflictingScheduleForVisitor(
+                "12345678",
+                nuevoHorario.getFecha(),
+                nuevoHorario.getHoraInicio(),
+                nuevoHorario.getHoraFin(),
+                nuevoHorario.getId()
+        )).thenReturn(true);
+
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            inscripcionService.inscribirActividad(request);
+        });
+
+        assertTrue(exception.getMessage().contains("ya está inscripto en otra actividad"));
+        verify(inscripcionRepository, never()).save(any(Inscripcion.class));
+    }
+
+    @Test
+    @DisplayName("Debería registrar exitosamente cuando no hay conflicto de horarios")
+    void deberiaRegistrarExitosamenteCuandoNoHayConflictoDeHorarios() {
+        HorarioActividad nuevoHorario = HorarioActividad.builder()
+                .id(11L)
+                .actividad(actividadSafari)
+                .fecha(LocalDate.now().plusDays(2))
+                .horaInicio(LocalTime.of(10, 0))
+                .horaFin(LocalTime.of(12, 0))
+                .cuposDisponibles(10)
+                .build();
+
+        VisitanteRequest visitante = VisitanteRequest.builder()
+                .nombre("Maria Gomez")
+                .dni("87654321")
+                .edad(25)
+                .build();
+
+        InscripcionRequest request = InscripcionRequest.builder()
+                .horarioActividadId(11L)
+                .cantidadPersonas(1)
+                .visitantes(List.of(visitante))
+                .email("maria@example.com")
+                .aceptoTyC(true)
+                .build();
+
+        Visitante visitanteEntity = Visitante.builder()
+                .id(1L)
+                .nombre("Maria Gomez")
+                .dni("87654321")
+                .edad(25)
+                .build();
+
+        when(horarioRepository.findById(11L)).thenReturn(Optional.of(nuevoHorario));
+        when(inscripcionRepository.existsByHorarioAndVisitanteDni(11L, "87654321")).thenReturn(false);
+        when(inscripcionRepository.existsConflictingScheduleForVisitor(
+                "87654321",
+                nuevoHorario.getFecha(),
+                nuevoHorario.getHoraInicio(),
+                nuevoHorario.getHoraFin(),
+                nuevoHorario.getId()
+        )).thenReturn(false);
+        when(visitanteService.crearVisitante(any(VisitanteRequest.class))).thenReturn(visitanteEntity);
+        when(horarioRepository.save(any(HorarioActividad.class))).thenReturn(nuevoHorario);
+        when(inscripcionRepository.save(any(Inscripcion.class))).thenAnswer(invocation -> {
+            Inscripcion inscripcion = invocation.getArgument(0);
+            inscripcion.setId(1L);
+            return inscripcion;
+        });
+
+        InscripcionResponse result = inscripcionService.inscribirActividad(request);
+
+        assertNotNull(result);
+        assertEquals("maria@example.com", result.getEmail());
+        assertEquals(1, result.getCantidadPersonas());
+        verify(inscripcionRepository, times(1)).save(any(Inscripcion.class));
+    }
+
     // ==================== ADDITIONAL EDGE CASES ====================
 
     @Test
-    @DisplayName("Should throw exception when quantity does not match visitors list size")
-    void shouldThrowExceptionWhenQuantityMismatch() {
-        // Arrange
+    @DisplayName("Debería lanzar una excepción cuando la cantidad no coincide con el tamaño de la lista de visitantes")
+    void deberiaLanzarExcepcionCuandoLaCantidadNoCoincideConLaListaDeVisitantes() {
         InscripcionRequest request = InscripcionRequest.builder()
                 .horarioActividadId(1L)
                 .cantidadPersonas(3) // Dice 3 personas
@@ -501,7 +593,6 @@ class InscripcionServiceTest {
 
         when(horarioRepository.findById(1L)).thenReturn(Optional.of(horarioConCupos));
 
-        // Act & Assert
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             inscripcionService.inscribirActividad(request);
         });
@@ -510,9 +601,8 @@ class InscripcionServiceTest {
     }
 
     @Test
-    @DisplayName("Should throw exception when trying to register for past schedule")
-    void shouldThrowExceptionWhenScheduleInPast() {
-        // Arrange
+    @DisplayName("Debería lanzar una excepción al intentar registrarse en un horario pasado")
+    void deberiaLanzarExcepcionAlIntentarRegistrarseEnUnHorarioPasado() {
         HorarioActividad horarioPasado = HorarioActividad.builder()
                 .id(1L)
                 .actividad(actividadSafari)
@@ -536,7 +626,6 @@ class InscripcionServiceTest {
 
         when(horarioRepository.findById(1L)).thenReturn(Optional.of(horarioPasado));
 
-        // Act & Assert
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             inscripcionService.inscribirActividad(request);
         });
@@ -545,9 +634,8 @@ class InscripcionServiceTest {
     }
 
     @Test
-    @DisplayName("Should successfully register multiple visitors")
-    void shouldRegisterMultipleVisitorsSuccessfully() {
-        // Arrange
+    @DisplayName("Debería registrar exitosamente a múltiples visitantes")
+    void deberiaRegistrarExitosamenteAMultiplesVisitantes() {
         List<VisitanteRequest> visitantes = Arrays.asList(
                 VisitanteRequest.builder().nombre("Juan Perez").dni("12345678").edad(30).build(),
                 VisitanteRequest.builder().nombre("Maria Gomez").dni("87654321").edad(28).build(),
@@ -573,10 +661,8 @@ class InscripcionServiceTest {
             return inscripcion;
         });
 
-        // Act
         InscripcionResponse result = inscripcionService.inscribirActividad(request);
 
-        // Assert
         assertNotNull(result);
         assertEquals(3, result.getCantidadPersonas());
         verify(visitanteService, times(3)).crearVisitante(any(VisitanteRequest.class));
@@ -586,8 +672,8 @@ class InscripcionServiceTest {
     // ==================== TESTS FOR obtenerInscripciones ====================
 
     @Test
-    @DisplayName("Should return all inscriptions")
-    void shouldReturnAllInscriptions() {
+    @DisplayName("Debería devolver todas las inscripciones")
+    void deberiaDevolverTodasLasInscripciones() {
         // Arrange
         // Crear visitantes y grupos de prueba
         Visitante visitante1 = Visitante.builder()
@@ -638,36 +724,30 @@ class InscripcionServiceTest {
 
         when(inscripcionRepository.findAll()).thenReturn(Arrays.asList(inscripcion1, inscripcion2));
 
-        // Act
         List<InscripcionResponse> result = inscripcionService.obtenerInscripciones();
 
-        // Assert
         assertNotNull(result);
         assertEquals(2, result.size());
         verify(inscripcionRepository, times(1)).findAll();
     }
 
     @Test
-    @DisplayName("Should return empty list when no inscriptions exist")
-    void shouldReturnEmptyListWhenNoInscriptions() {
-        // Arrange
+    @DisplayName("Debería devolver una lista vacía cuando no existen inscripciones")
+    void deberiaDevolverListaVaciaCuandoNoExistenInscripciones() {
         when(inscripcionRepository.findAll()).thenReturn(List.of());
 
-        // Act
         List<InscripcionResponse> result = inscripcionService.obtenerInscripciones();
 
-        // Assert
         assertNotNull(result);
         assertTrue(result.isEmpty());
         verify(inscripcionRepository, times(1)).findAll();
     }
 
-    // ==================== TESTS FOR obtenerInscripcionPorId ====================
+    // ==================== TESTS PARA obtenerInscripcionPorId ====================
 
     @Test
-    @DisplayName("Should return inscription by id when it exists")
-    void shouldReturnInscriptionById() {
-        // Arrange
+    @DisplayName("Debería devolver la inscripción por id cuando existe")
+    void deberiaDevolverInscripcionPorId() {
         Visitante visitante = Visitante.builder()
                 .id(1L)
                 .nombre("Juan Perez")
@@ -693,137 +773,23 @@ class InscripcionServiceTest {
 
         when(inscripcionRepository.findById(1L)).thenReturn(Optional.of(inscripcion));
 
-        // Act
         InscripcionResponse result = inscripcionService.obtenerInscripcionPorId(1L);
 
-        // Assert
         assertNotNull(result);
         assertEquals("test@example.com", result.getEmail());
         verify(inscripcionRepository, times(1)).findById(1L);
     }
 
     @Test
-    @DisplayName("Should throw exception when inscription not found by id")
-    void shouldThrowExceptionWhenInscriptionNotFoundById() {
-        // Arrange
+    @DisplayName("Debería lanzar una excepción cuando no se encuentra la inscripción por id")
+    void deberiaLanzarExcepcionCuandoNoSeEncuentraLaInscripcionPorId() {
         when(inscripcionRepository.findById(999L)).thenReturn(Optional.empty());
 
-        // Act & Assert
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             inscripcionService.obtenerInscripcionPorId(999L);
         });
 
         assertTrue(exception.getMessage().contains("No se encontró la inscripción"));
         assertTrue(exception.getMessage().contains("999"));
-    }
-
-    // ==================== CASOS DE PRUEBA: CONFLICTO DE HORARIO ====================
-
-    @Test
-    @DisplayName("Should throw exception when visitor is registered in another activity with overlapping schedule")
-    void shouldThrowExceptionWhenVisitorHasConflictingSchedule() {
-        // Arrange
-        HorarioActividad nuevoHorario = HorarioActividad.builder()
-                .id(10L)
-                .actividad(actividadSafari)
-                .fecha(LocalDate.now().plusDays(2))
-                .horaInicio(LocalTime.of(10, 0))
-                .horaFin(LocalTime.of(12, 0))
-                .cuposDisponibles(10)
-                .build();
-
-        VisitanteRequest visitante = VisitanteRequest.builder()
-                .nombre("Juan Perez")
-                .dni("12345678")
-                .edad(30)
-                .build();
-
-        InscripcionRequest request = InscripcionRequest.builder()
-                .horarioActividadId(10L)
-                .cantidadPersonas(1)
-                .visitantes(List.of(visitante))
-                .email("juan@example.com")
-                .aceptoTyC(true)
-                .build();
-
-        when(horarioRepository.findById(10L)).thenReturn(Optional.of(nuevoHorario));
-        when(inscripcionRepository.existsByHorarioAndVisitanteDni(10L, "12345678")).thenReturn(false);
-        // 👇 Simula conflicto con otra actividad en la misma fecha/hora
-        when(inscripcionRepository.existsConflictingScheduleForVisitor(
-                "12345678",
-                nuevoHorario.getFecha(),
-                nuevoHorario.getHoraInicio(),
-                nuevoHorario.getHoraFin(),
-                nuevoHorario.getId()
-        )).thenReturn(true);
-
-        // Act & Assert
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            inscripcionService.inscribirActividad(request);
-        });
-
-        assertTrue(exception.getMessage().contains("ya está inscripto en otra actividad"));
-        verify(inscripcionRepository, never()).save(any(Inscripcion.class));
-    }
-
-    @Test
-    @DisplayName("Should register successfully when there is no conflicting schedule")
-    void shouldRegisterSuccessfullyWhenNoScheduleConflict() {
-        // Arrange
-        HorarioActividad nuevoHorario = HorarioActividad.builder()
-                .id(11L)
-                .actividad(actividadSafari)
-                .fecha(LocalDate.now().plusDays(2))
-                .horaInicio(LocalTime.of(10, 0))
-                .horaFin(LocalTime.of(12, 0))
-                .cuposDisponibles(10)
-                .build();
-
-        VisitanteRequest visitante = VisitanteRequest.builder()
-                .nombre("Maria Gomez")
-                .dni("87654321")
-                .edad(25)
-                .build();
-
-        InscripcionRequest request = InscripcionRequest.builder()
-                .horarioActividadId(11L)
-                .cantidadPersonas(1)
-                .visitantes(List.of(visitante))
-                .email("maria@example.com")
-                .aceptoTyC(true)
-                .build();
-
-        Visitante visitanteEntity = Visitante.builder()
-                .id(1L)
-                .nombre("Maria Gomez")
-                .dni("87654321")
-                .edad(25)
-                .build();
-
-        when(horarioRepository.findById(11L)).thenReturn(Optional.of(nuevoHorario));
-        when(inscripcionRepository.existsByHorarioAndVisitanteDni(11L, "87654321")).thenReturn(false);
-        when(inscripcionRepository.existsConflictingScheduleForVisitor(
-                "87654321",
-                nuevoHorario.getFecha(),
-                nuevoHorario.getHoraInicio(),
-                nuevoHorario.getHoraFin(),
-                nuevoHorario.getId()
-        )).thenReturn(false);
-        when(visitanteService.crearVisitante(any(VisitanteRequest.class))).thenReturn(visitanteEntity);
-        when(horarioRepository.save(any(HorarioActividad.class))).thenReturn(nuevoHorario);
-        when(inscripcionRepository.save(any(Inscripcion.class))).thenAnswer(invocation -> {
-            Inscripcion inscripcion = invocation.getArgument(0);
-            inscripcion.setId(1L);
-            return inscripcion;
-        });
-
-        // Act
-        InscripcionResponse result = inscripcionService.inscribirActividad(request);
-
-        // Assert
-        assertNotNull(result);
-        assertEquals("maria@example.com", result.getEmail());
-        assertEquals(1, result.getCantidadPersonas());
-        verify(inscripcionRepository, times(1)).save(any(Inscripcion.class));
     }
 }

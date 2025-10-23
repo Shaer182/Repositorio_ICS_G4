@@ -27,8 +27,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 /**
- * Unit tests for ActividadService
- * Tests business logic for activities and schedules
+ * Pruebas unitarias para ActividadService
+ * Prueban la lógica de negocio para actividades y horarios
  */
 @ExtendWith(MockitoExtension.class)
 class ActividadServiceTest {
@@ -42,109 +42,121 @@ class ActividadServiceTest {
     @InjectMocks
     private ActividadService actividadService;
 
+    private Actividad actividadJardineria;
+    private Actividad actividadPalestra;
     private Actividad actividadSafari;
     private Actividad actividadTirolesa;
-    private Actividad actividadPalestra;
 
     @BeforeEach
     void setUp() {
-        actividadSafari = Actividad.builder()
-                .id(1L)
-                .nombre("Safari")
+        actividadJardineria = Actividad.builder()
+                .id(4L)
+                .nombre("Jardinería")
                 .requiereVestimenta(false)
                 .edadMinima(0)
-                .cupoMaximo(20)
-                .descripcion("Safari por el parque")
-                .build();
-
-        actividadTirolesa = Actividad.builder()
-                .id(2L)
-                .nombre("Tirolesa")
-                .requiereVestimenta(true)
-                .edadMinima(12)
-                .cupoMaximo(15)
-                .descripcion("Tirolesa aventura")
+                .cupoMaximo(12)
+                .descripcion("Actividad práctica de plantación, riego y cuidado de plantas en el vivero del parque.")
+                .terminosCondiciones("El participante debe seguir las instrucciones del encargado y respetar las zonas delimitadas.")
                 .build();
 
         actividadPalestra = Actividad.builder()
                 .id(3L)
                 .nombre("Palestra")
                 .requiereVestimenta(true)
-                .edadMinima(18)
+                .edadMinima(12)
+                .cupoMaximo(12)
+                .descripcion("Actividad de escalada en muro vertical con asistencia de un instructor.")
+                .terminosCondiciones("El participante debe usar arnés y casco provistos por el parque.")
+                .build();
+
+        actividadSafari = Actividad.builder()
+                .id(2L)
+                .nombre("Safari")
+                .requiereVestimenta(false)
+                .edadMinima(12)
+                .cupoMaximo(8)
+                .descripcion("Recorrido guiado por las zonas de animales del parque con observación educativa.")
+                .terminosCondiciones("El participante debe permanecer dentro del vehículo durante todo el recorrido.")
+                .build();
+
+        actividadTirolesa = Actividad.builder()
+                .id(1L)
+                .nombre("Tirolesa")
+                .requiereVestimenta(true)
+                .edadMinima(12)
                 .cupoMaximo(10)
-                .descripcion("Escalada en palestra")
+                .descripcion("Recorrido aéreo por cable con arnés de seguridad y casco obligatorio.")
+                .terminosCondiciones("El participante debe usar el equipo de seguridad completo y seguir las instrucciones del guía.")
                 .build();
     }
 
-    // ==================== TESTS FOR obtenerActividades ====================
+
+    // ==================== TESTS PARA obtenerActividades ====================
 
     @Test
-    @DisplayName("Should return all activities sorted by name")
-    void shouldReturnAllActivitiesSortedByName() {
-        // Arrange - actividades en orden no alfabético
+    @DisplayName("Debería devolver todas las actividades ordenadas por nombre")
+    void deberiaDevolverTodasLasActividadesOrdenadasPorNombre() {
+        // Actividades (sin orden específico)
         List<Actividad> actividades = Arrays.asList(
-                actividadTirolesa,  // T
-                actividadSafari,    // S
-                actividadPalestra   // P
+                actividadTirolesa,   // T
+                actividadSafari,     // S
+                actividadPalestra,   // P
+                actividadJardineria  // J
         );
 
         when(actividadRepository.findAll()).thenReturn(actividades);
 
-        // Act
         List<ActividadResponse> result = actividadService.obtenerActividades();
 
-        // Assert
         assertNotNull(result);
-        assertEquals(3, result.size());
+        assertEquals(4, result.size());
 
         // Verificar que están ordenadas alfabéticamente
-        assertEquals("Palestra", result.get(0).getNombre());
-        assertEquals("Safari", result.get(1).getNombre());
-        assertEquals("Tirolesa", result.get(2).getNombre());
+        assertEquals("Jardinería", result.get(0).getNombre());
+        assertEquals("Palestra", result.get(1).getNombre());
+        assertEquals("Safari", result.get(2).getNombre());
+        assertEquals("Tirolesa", result.get(3).getNombre());
 
         verify(actividadRepository, times(1)).findAll();
     }
 
+
     @Test
-    @DisplayName("Should return empty list when no activities exist")
-    void shouldReturnEmptyListWhenNoActivities() {
-        // Arrange
+    @DisplayName("Debería devolver una lista vacía cuando no existen actividades")
+    void deberiaDevolverListaVaciaCuandoNoExistenActividades() {
         when(actividadRepository.findAll()).thenReturn(List.of());
 
-        // Act
         List<ActividadResponse> result = actividadService.obtenerActividades();
 
-        // Assert
         assertNotNull(result);
         assertTrue(result.isEmpty());
         verify(actividadRepository, times(1)).findAll();
     }
 
     @Test
-    @DisplayName("Should map actividad properties to response correctly")
-    void shouldMapActividadPropertiesToResponse() {
-        // Arrange
+    @DisplayName("Debería mapear correctamente las propiedades de la actividad a la respuesta")
+    void deberiaMapearCorrectamenteLasPropiedadesDeLaActividadALaRespuesta() {
         when(actividadRepository.findAll()).thenReturn(List.of(actividadTirolesa));
 
-        // Act
         List<ActividadResponse> result = actividadService.obtenerActividades();
 
-        // Assert
         assertEquals(1, result.size());
         ActividadResponse response = result.get(0);
-        assertEquals(2L, response.getId());
+        assertEquals(1L, response.getId());
         assertEquals("Tirolesa", response.getNombre());
-        assertEquals(true, response.isRequiereVestimenta());
+        assertTrue(response.isRequiereVestimenta());
         assertEquals(12, response.getEdadMinima());
-        assertEquals("Tirolesa aventura", response.getDescripcion());
+        assertEquals("Recorrido aéreo por cable con arnés de seguridad y casco obligatorio.", response.getDescripcion());
+        assertEquals(10, response.getCupoMaximo());
+        assertEquals("El participante debe usar el equipo de seguridad completo y seguir las instrucciones del guía.", response.getTerminosCondiciones());
     }
 
-    // ==================== TESTS FOR obtenerHorarios ====================
+
+    // ==================== TESTS PARA obtenerHorarios ====================
 
     @Test
-    @DisplayName("Should return schedules for future date sorted by start time")
-    void shouldReturnSchedulesForFutureDate() {
-        // Arrange
+    @DisplayName("Debería devolver los horarios para una fecha futura ordenados por hora de inicio")
+    void deberiaDevolverHorariosParaFechaFutura() {
         LocalDate futureDate = LocalDate.now().plusDays(7);
 
         HorarioActividad horario1 = HorarioActividad.builder()
@@ -171,10 +183,8 @@ class ActividadServiceTest {
         when(actividadRepository.findById(1L)).thenReturn(Optional.of(actividadSafari));
         when(horarioRepository.findByActividadAndFecha(actividadSafari, futureDate)).thenReturn(horarios);
 
-        // Act
         List<HorarioResponse> result = actividadService.obtenerHorarios(1L, futureDate);
 
-        // Assert
         assertNotNull(result);
         assertEquals(2, result.size());
 
@@ -187,9 +197,8 @@ class ActividadServiceTest {
     }
 
     @Test
-    @DisplayName("Should filter out past schedules when date is today")
-    void shouldFilterPastSchedulesWhenDateIsToday() {
-        // Arrange
+    @DisplayName("Debería filtrar los horarios pasados cuando la fecha es hoy")
+    void deberiaFiltrarHorariosPasadosCuandoLaFechaEsHoy() {
         LocalDate today = LocalDate.now();
         LocalTime currentTime = LocalTime.now();
 
@@ -218,10 +227,8 @@ class ActividadServiceTest {
         when(actividadRepository.findById(1L)).thenReturn(Optional.of(actividadSafari));
         when(horarioRepository.findByActividadAndFecha(actividadSafari, today)).thenReturn(horarios);
 
-        // Act
         List<HorarioResponse> result = actividadService.obtenerHorarios(1L, today);
 
-        // Assert
         assertNotNull(result);
         assertEquals(1, result.size());
         assertEquals(2L, result.get(0).getId());
@@ -229,9 +236,8 @@ class ActividadServiceTest {
     }
 
     @Test
-    @DisplayName("Should include current hour schedule when date is today")
-    void shouldIncludeCurrentHourSchedule() {
-        // Arrange
+    @DisplayName("Debe incluir el horario de la hora actual cuando la fecha es hoy")
+    void debeIncluirHorarioDeLaHoraActual() {
         LocalDate today = LocalDate.now();
         // Usar una hora en el futuro para evitar problemas de timing
         LocalTime futureTime = LocalTime.now().plusMinutes(30);
@@ -249,18 +255,15 @@ class ActividadServiceTest {
         when(horarioRepository.findByActividadAndFecha(actividadSafari, today))
                 .thenReturn(List.of(horarioActual));
 
-        // Act
         List<HorarioResponse> result = actividadService.obtenerHorarios(1L, today);
 
-        // Assert
         assertNotNull(result);
         assertEquals(1, result.size());
     }
 
     @Test
-    @DisplayName("Should throw exception when fecha is null")
-    void shouldThrowExceptionWhenFechaIsNull() {
-        // Act & Assert
+    @DisplayName("Debe lanzar una excepción cuando la fecha es nula")
+    void debeLanzarExcepcionCuandoLaFechaEsNula() {
         InvalidParameterException exception = assertThrows(InvalidParameterException.class, () -> {
             actividadService.obtenerHorarios(1L, null);
         });
@@ -271,12 +274,10 @@ class ActividadServiceTest {
     }
 
     @Test
-    @DisplayName("Should throw exception when fecha is in the past")
-    void shouldThrowExceptionWhenFechaIsInPast() {
-        // Arrange
+    @DisplayName("Debe lanzar una excepción cuando la fecha es en el pasado")
+    void debeLanzarExcepcionCuandoLaFechaEsEnElPasado() {
         LocalDate pastDate = LocalDate.now().minusDays(1);
 
-        // Act & Assert
         InvalidParameterException exception = assertThrows(InvalidParameterException.class, () -> {
             actividadService.obtenerHorarios(1L, pastDate);
         });
@@ -286,13 +287,12 @@ class ActividadServiceTest {
     }
 
     @Test
-    @DisplayName("Should throw exception when actividad does not exist")
-    void shouldThrowExceptionWhenActividadNotFound() {
-        // Arrange
+    @DisplayName("Debe lanzar una excepción cuando la actividad no existe")
+    void debeLanzarExcepcionCuandoActividadNoEncontrada() {
+
         LocalDate futureDate = LocalDate.now().plusDays(7);
         when(actividadRepository.findById(999L)).thenReturn(Optional.empty());
 
-        // Act & Assert
         InvalidParameterException exception = assertThrows(InvalidParameterException.class, () -> {
             actividadService.obtenerHorarios(999L, futureDate);
         });
@@ -302,27 +302,22 @@ class ActividadServiceTest {
     }
 
     @Test
-    @DisplayName("Should return empty list when no schedules exist for date")
-    void shouldReturnEmptyListWhenNoSchedulesForDate() {
-        // Arrange
+    @DisplayName("Debe retornar una lista vacía cuando no existen horarios para la fecha")
+    void debeRetornarListaVaciaCuandoNoExistenHorariosParaLaFecha() {
         LocalDate futureDate = LocalDate.now().plusDays(7);
 
         when(actividadRepository.findById(1L)).thenReturn(Optional.of(actividadSafari));
         when(horarioRepository.findByActividadAndFecha(actividadSafari, futureDate))
                 .thenReturn(List.of());
 
-        // Act
         List<HorarioResponse> result = actividadService.obtenerHorarios(1L, futureDate);
-
-        // Assert
         assertNotNull(result);
         assertTrue(result.isEmpty());
     }
 
     @Test
-    @DisplayName("Should map horario properties to response correctly")
-    void shouldMapHorarioPropertiesToResponse() {
-        // Arrange
+    @DisplayName("Debe mapear correctamente las propiedades del horario a la respuesta")
+    void debeMapearPropiedadesDelHorarioALaRespuesta() {
         LocalDate futureDate = LocalDate.now().plusDays(7);
 
         HorarioActividad horario = HorarioActividad.builder()
@@ -338,10 +333,8 @@ class ActividadServiceTest {
         when(horarioRepository.findByActividadAndFecha(actividadSafari, futureDate))
                 .thenReturn(List.of(horario));
 
-        // Act
         List<HorarioResponse> result = actividadService.obtenerHorarios(1L, futureDate);
 
-        // Assert
         assertEquals(1, result.size());
         HorarioResponse response = result.get(0);
         assertEquals(1L, response.getId());
@@ -354,40 +347,33 @@ class ActividadServiceTest {
     // ==================== TESTS FOR obtenerActividadPorId ====================
 
     @Test
-    @DisplayName("Should return actividad when id exists")
-    void shouldReturnActividadWhenIdExists() {
-        // Arrange
+    @DisplayName("Debe retornar la actividad cuando el id existe")
+    void debeRetornarActividadCuandoIdExiste() {
         when(actividadRepository.findById(1L)).thenReturn(Optional.of(actividadSafari));
 
-        // Act
         Optional<Actividad> result = actividadService.obtenerActividadPorId(1L);
 
-        // Assert
         assertTrue(result.isPresent());
         assertEquals("Safari", result.get().getNombre());
         verify(actividadRepository, times(1)).findById(1L);
     }
 
     @Test
-    @DisplayName("Should return empty optional when actividad not found")
-    void shouldReturnEmptyOptionalWhenActividadNotFound() {
-        // Arrange
+    @DisplayName("Debe retornar un optional vacío cuando la actividad no se encuentra")
+    void debeRetornarOptionalVacioCuandoActividadNoEncontrada() {
         when(actividadRepository.findById(999L)).thenReturn(Optional.empty());
 
-        // Act
         Optional<Actividad> result = actividadService.obtenerActividadPorId(999L);
 
-        // Assert
         assertFalse(result.isPresent());
         verify(actividadRepository, times(1)).findById(999L);
     }
 
-    // ==================== EDGE CASES ====================
+    // ==================== Casos extremos ====================
 
     @Test
-    @DisplayName("Should handle multiple schedules on same day correctly")
-    void shouldHandleMultipleSchedulesOnSameDay() {
-        // Arrange
+    @DisplayName("Debe manejar correctamente múltiples horarios en el mismo día")
+    void debeManejarMultiplesHorariosEnMismoDia() {
         LocalDate futureDate = LocalDate.now().plusDays(7);
 
         List<HorarioActividad> horarios = Arrays.asList(
@@ -421,10 +407,8 @@ class ActividadServiceTest {
         when(horarioRepository.findByActividadAndFecha(actividadSafari, futureDate))
                 .thenReturn(horarios);
 
-        // Act
         List<HorarioResponse> result = actividadService.obtenerHorarios(1L, futureDate);
 
-        // Assert
         assertEquals(3, result.size());
         assertEquals(LocalTime.of(8, 0), result.get(0).getHoraInicio());
         assertEquals(LocalTime.of(12, 0), result.get(1).getHoraInicio());
@@ -432,19 +416,16 @@ class ActividadServiceTest {
     }
 
     @Test
-    @DisplayName("Should accept today's date when valid")
-    void shouldAcceptTodayDateWhenValid() {
-        // Arrange
+    @DisplayName("Debe aceptar la fecha de hoy cuando es válida")
+    void debeAceptarFechaDeHoyCuandoEsValida() {
         LocalDate today = LocalDate.now();
 
         when(actividadRepository.findById(1L)).thenReturn(Optional.of(actividadSafari));
         when(horarioRepository.findByActividadAndFecha(actividadSafari, today))
                 .thenReturn(List.of());
 
-        // Act
         List<HorarioResponse> result = actividadService.obtenerHorarios(1L, today);
 
-        // Assert
         assertNotNull(result);
         verify(actividadRepository, times(1)).findById(1L);
     }
