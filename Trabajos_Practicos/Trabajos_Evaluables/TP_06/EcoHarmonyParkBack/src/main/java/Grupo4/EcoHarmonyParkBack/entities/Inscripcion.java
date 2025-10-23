@@ -35,4 +35,7 @@ public class Inscripcion {
 
     @Column(name = "email")
     private String email;
+
+    @Column(name = "aceptoTyC")
+    private boolean aceptoTyC;
 }

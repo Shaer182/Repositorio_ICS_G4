@@ -27,4 +27,7 @@ public class InscripcionRequest {
     @NotBlank(message = "El correo electrónico es obligatorio.")
     @Email(message = "El correo electrónico no tiene un formato válido.")
     private String email;
+
+    @NotNull(message = "Debe aceptar los términos y condiciones.")
+    private boolean aceptoTyC;
 }

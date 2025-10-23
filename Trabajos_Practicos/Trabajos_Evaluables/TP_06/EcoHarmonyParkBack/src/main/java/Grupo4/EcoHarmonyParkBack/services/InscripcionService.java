@@ -42,6 +42,10 @@ public class InscripcionService {
 
     @Transactional
     public InscripcionResponse inscribirActividad(InscripcionRequest request) {
+        if (!request.isAceptoTyC()){
+            throw new RuntimeException("Debe aceptar los términos y condiciones.");
+        }
+
         // Buscar el horario
         HorarioActividad horario = horarioRepository.findById(request.getHorarioActividadId())
                 .orElseThrow(() -> new RuntimeException("Horario no encontrado"));
@@ -76,23 +80,9 @@ public class InscripcionService {
             }
         }
 
-        // Descontar los cupos
-        horario.setCuposDisponibles(horario.getCuposDisponibles() - cantidadSolicitada);
-        horarioRepository.save(horario);
-
-        // Crear la inscripción
-        Inscripcion inscripcion = Inscripcion.builder()
-                .horarioActividad(horario)
-                .cantidadPersonas(cantidadSolicitada)
-                .fechaInscripcion(LocalDateTime.now())
-                .email(request.getEmail())
-                .build();
-
-        List<Grupo> grupos = new ArrayList<>();
-
-        // Procesar visitantes
+        // VALIDACIONES ANTES DE MODIFICAR DATOS
+        // Validar talla de ropa, edad mínima y duplicados ANTES de descontar cupos
         for (VisitanteRequest vr : request.getVisitantes()) {
-
             if (requiereTalla && (vr.getTallaVestimenta() == null || vr.getTallaVestimenta().isEmpty())) {
                 throw new RuntimeException("La actividad requiere talla de vestimenta para todos los visitantes");
             }
@@ -106,6 +96,36 @@ public class InscripcionService {
                 throw new RuntimeException("El visitante con DNI " + vr.getDni()
                         + " ya está inscripto en este horario.");
             }
+
+            // Validar conflicto de horarios (otra actividad a la misma hora)
+            if (inscripcionRepository.existsConflictingScheduleForVisitor(
+                    vr.getDni(),
+                    horario.getFecha(),
+                    horario.getHoraInicio(),
+                    horario.getHoraFin(),
+                    horario.getId()
+            )) {
+                throw new RuntimeException("El visitante con DNI " + vr.getDni()
+                        + " ya está inscripto en otra actividad que se solapa con este horario.");
+            }
+        }
+
+        // AHORA SÍ, descontar los cupos después de todas las validaciones
+        horario.setCuposDisponibles(horario.getCuposDisponibles() - cantidadSolicitada);
+        horarioRepository.save(horario);
+
+        // Crear la inscripción
+        Inscripcion inscripcion = Inscripcion.builder()
+                .horarioActividad(horario)
+                .cantidadPersonas(cantidadSolicitada)
+                .fechaInscripcion(LocalDateTime.now())
+                .email(request.getEmail())
+                .build();
+
+        List<Grupo> grupos = new ArrayList<>();
+
+        // Procesar visitantes (ya validados)
+        for (VisitanteRequest vr : request.getVisitantes()) {
 
             Visitante visitante = visitanteService.crearVisitante(vr);
 

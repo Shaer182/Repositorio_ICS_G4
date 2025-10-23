@@ -91,7 +91,7 @@ export async function registerForActivity(inscripcionRequest: {
   horarioActividadId: number;
   cantidadPersonas: number;
   email?: string | null;
-  
+  aceptoTyC: boolean;
 }): Promise<ApiResult<any>> {
   try {
     const response = await fetch(`${API_BASE_URL}/inscripciones`, {
