@@ -36,8 +36,7 @@ build/
 ### VS Code ###
 .vscode/
 
-### Claude Code ###
-.claude/
+
 
 # ================================
 # FRONTEND (Ahora en carpeta separada)

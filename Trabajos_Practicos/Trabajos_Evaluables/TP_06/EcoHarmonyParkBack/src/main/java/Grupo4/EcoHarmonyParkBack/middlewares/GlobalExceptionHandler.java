@@ -4,8 +4,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.nio.file.AccessDeniedException;
@@ -34,6 +36,20 @@ public class GlobalExceptionHandler {
         body.put("errors", fieldErrors);
 
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+    }
+
+    // Maneja parámetros de request faltantes (por ejemplo, @RequestParam sin value)
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<Map<String, Object>> handleMissingServletRequestParameter(MissingServletRequestParameterException ex) {
+        String message = String.format("El parámetro '%s' es obligatorio", ex.getParameterName());
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, message);
+    }
+
+    // Maneja errores de conversión de tipo en parámetros (por ejemplo, fecha inválida)
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<Map<String, Object>> handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        String message = String.format("El parámetro '%s' tiene un formato inválido", ex.getName());
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, message);
     }
 
     // Maneja ResponseStatusException (usada en servicios)
