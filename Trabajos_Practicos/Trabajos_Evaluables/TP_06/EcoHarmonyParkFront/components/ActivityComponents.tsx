@@ -134,18 +134,24 @@ export function TimeSlotCard({ slot, onSelect, selected }: { slot: TimeSlot; onS
 // ---------------------------
 // ParticipantsForm
 // ---------------------------
+// Dentro de ActivityComponents file: reemplazar la sección ParticipantsForm por esto
+
 export function ParticipantsForm({
   participants,
   onChange,
   onCountChange,
   selectedTimeSlot,
   selectedActivity,
+  contactEmail,
+  onContactEmailChange,
 }: {
   participants: Participant[]
   onChange: (index: number, field: keyof Participant, value: string) => void
   onCountChange: (n: number) => void
   selectedTimeSlot: TimeSlot | null
   selectedActivity: ActivityFromApi | null
+  contactEmail: string
+  onContactEmailChange: (v: string) => void
 }) {
   return (
     <div>
@@ -159,6 +165,18 @@ export function ParticipantsForm({
             <option key={n} value={n}>{n} {n === 1 ? "persona" : "personas"}</option>
           ))}
         </select>
+      </div>
+
+      {/* Email de contacto único */}
+      <div style={{ marginTop: 12 }} className="form-group">
+        <label className="form-label">Email de contacto </label>
+        <input
+          type="email"
+          className={`form-input ${!contactEmail.trim() ? "form-input-error" : ""}`}
+          value={contactEmail}
+          onChange={(e) => onContactEmailChange(e.target.value)}
+          placeholder="ejemplo@correo.com"
+        />
       </div>
 
       <div style={{ marginTop: 18 }} className="form">
@@ -180,10 +198,6 @@ export function ParticipantsForm({
               <label className="form-label">Edad</label>
               <input type="number" className={`form-input ${!participant.age.trim() ? "form-input-error" : ""}`} value={participant.age} onChange={(e) => onChange(index, "age", e.target.value)} placeholder="Ej: 25" />
             </div>
-                        <div className="form-group">
-              <label className="form-label">Email</label>
-              <input className={`form-input ${!participant.email.trim() ? "form-input-error" : ""}`} value={participant.email} onChange={(e) => onChange(index, "email", e.target.value)} placeholder="Ej: JuanPérez@gmail.com" />
-            </div>
 
             {selectedActivity?.requiereVestimenta && (
               <div className="form-group">
@@ -202,6 +216,7 @@ export function ParticipantsForm({
     </div>
   )
 }
+
 
 // ---------------------------
 // TermsSection

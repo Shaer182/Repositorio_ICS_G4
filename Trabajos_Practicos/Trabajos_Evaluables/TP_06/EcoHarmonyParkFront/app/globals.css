@@ -78,6 +78,12 @@ body {
   margin-bottom: 0.5rem;
 }
 
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+
 .section-description {
   font-size: 1.125rem;
   text-align: center;
@@ -110,9 +116,20 @@ body {
     gap: 2rem;
   }
 }
+.activities-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); /* ajustar ancho mínimo de tarjeta */
+  gap: 1rem;
+  align-items: stretch; 
+}
 
-/* Tarjetas de actividad */
+/* Cada tarjeta se comporta como columna flex y ocupa toda la altura */
 .activity-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; 
+  height: 100%;                   
+  min-height: 260px;               
   background-color: var(--blanco);
   border: 2px solid rgba(61, 163, 93, 0.3);
   border-radius: 0.75rem;
@@ -120,33 +137,28 @@ body {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
 }
-
-/* .activity-card:hover {
-  border-color: var(--verde-claro);
-  box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
-} */
-
-.activity-card-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.activity-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--verde-oscuro);
-  flex: 1;
-}
-
+/* Acotamos la descripción para que no estire la tarjeta */
 .activity-description {
   font-size: 1rem;
   color: var(--verde-medio);
   margin-bottom: 1.5rem;
   line-height: 1.5;
+
+  /* limitador de líneas (funciona en la mayoría de navegadores modernos) */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4; /* mostrar máximo 4 líneas: ajustá según diseño */
+  overflow: hidden;
 }
+
+/* Asegurarse que el bloque con botones quede abajo.
+   Si tu markup tiene más contenedores, este selector es genérico y funciona bien */
+.activity-card > div:last-child,
+.activity-card > .card-actions {
+  margin-top: 12px;
+  /* Si los botones están en el último hijo, ya quedarán en la base por justify-content: space-between */
+}
+
 
 /* Badges */
 .badge {

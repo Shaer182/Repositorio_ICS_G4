@@ -30,9 +30,6 @@ import {
 import { registerForActivity } from "../lib/api"
 
 
-// ---------------------------
-// Componente principal (usa los subcomponentes)
-// ---------------------------
 export function ActivityRegistrationForm() {
   const [currentStep, setCurrentStep] = useState<Step>("activity")
   const [submitting, setSubmitting] = useState(false)
@@ -43,7 +40,10 @@ export function ActivityRegistrationForm() {
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([])
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<TimeSlot | null>(null)
   const [participantCount, setParticipantCount] = useState<number>(1)
-  const [participants, setParticipants] = useState<Participant[]>([{ name: "", dni: "", age: "", clothingSize: "", email: "" }])
+  const [participants, setParticipants] = useState<Participant[]>(
+    [{ name: "", dni: "", age: "", clothingSize: "" }]
+  )
+  const [contactEmail, setContactEmail] = useState<string>("") // <- nuevo campo: email de contacto único
   const [termsAccepted, setTermsAccepted] = useState(false)
   const [errors, setErrors] = useState<string[]>([])
   const [registrationComplete, setRegistrationComplete] = useState(false)
@@ -100,21 +100,20 @@ export function ActivityRegistrationForm() {
     setTimeSlots([])
     setErrors([])
     setParticipantCount(1)
-    setParticipants([{ name: "", dni: "", age: "", clothingSize: "", email: ""}])
-    // remain in same step; user will click Siguiente to go to timeslot
+    setParticipants([{ name: "", dni: "", age: "", clothingSize: "" }])
+    setContactEmail("")
   }
 
   const handleDateChange = async (dateValue: string) => {
     if (!dateValue) return
 
-      const today = new Date();
-      today.setHours(0,0,0,0);
+    const today = new Date();
+    today.setHours(0,0,0,0);
 
-      // dateValue = "2025-10-22"
-      const [y, m, d] = dateValue.split('-');
-      const selectedDateObj = new Date(Number(y), Number(m) -1, Number(d));
+    const [y, m, d] = dateValue.split('-');
+    const selectedDateObj = new Date(Number(y), Number(m) -1, Number(d));
 
-    if (selectedDateObj < (today)) {
+    if (selectedDateObj < today) {
       setErrors(["No puede seleccionar una fecha anterior a hoy"])
       return
     }
@@ -159,7 +158,7 @@ export function ActivityRegistrationForm() {
     }
 
     setParticipantCount(count)
-    const newParticipants = Array.from({ length: count }, (_, i) => participants[i] || { name: "", dni: "", age: "", clothingSize: "", email: ""})
+    const newParticipants = Array.from({ length: count }, (_, i) => participants[i] || { name: "", dni: "", age: "", clothingSize: ""})
     setParticipants(newParticipants)
     setErrors([])
   }
@@ -169,7 +168,6 @@ export function ActivityRegistrationForm() {
     newParticipants[index] = { ...newParticipants[index], [field]: value };
     setParticipants(newParticipants);
   };
-
 
   const validateStep = (step: Step): boolean => {
     const newErrors: string[] = []
@@ -188,53 +186,35 @@ export function ActivityRegistrationForm() {
         if (selectedTimeSlot && participantCount > selectedTimeSlot.availableSpots) newErrors.push(`Solo hay ${selectedTimeSlot.availableSpots} cupos disponibles`)
         const nameRegex = /^[\p{L} '\-]+$/u;
         const dniRegex = /^\d{8}$/;
+
         participants.forEach((p, i) => {
-          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
           const idx = i + 1;
           const nombre = (p.name || "").trim();
           const dni = (p.dni || "").trim();
           const edadStr = (p.age || "").trim();
-          const email = (p.email || "").trim();
 
-          // Nombre
-          if (!nombre) {
-            newErrors.push(`Participante ${idx}: El nombre es requerido`);
-          } else if (!nameRegex.test(nombre)) {
-            newErrors.push(`Participante ${idx}: El nombre debe contener solo letras, espacios, guiones o apóstrofes`);
-          }
+          if (!nombre) newErrors.push(`Participante ${idx}: El nombre es requerido`);
+          else if (!nameRegex.test(nombre)) newErrors.push(`Participante ${idx}: El nombre debe contener solo letras, espacios, guiones o apóstrofes`);
 
-          // DNI
-          if (!dni) {
-            newErrors.push(`Participante ${idx}: El DNI es requerido`);
-          } else if (!dniRegex.test(dni)) {
-            newErrors.push(`Participante ${idx}: El DNI debe tener exactamente 8 dígitos`);
-          }
-            // Email (nuevo)
-          if (!email) newErrors.push(`Participante ${idx}: El email es requerido`);
-          else if (!emailRegex.test(email)) newErrors.push(`Participante ${idx}: El email no tiene un formato válido`);
+          if (!dni) newErrors.push(`Participante ${idx}: El DNI es requerido`);
+          else if (!dniRegex.test(dni)) newErrors.push(`Participante ${idx}: El DNI debe tener exactamente 8 dígitos`);
 
-          // Edad
-          if (!edadStr) {
-            newErrors.push(`Participante ${idx}: La edad es requerida`);
-          } else {
+          if (!edadStr) newErrors.push(`Participante ${idx}: La edad es requerida`);
+          else {
             const edadNum = Number(edadStr);
-            if (!Number.isFinite(edadNum) || !Number.isInteger(edadNum)) {
-              newErrors.push(`Participante ${idx}: La edad debe ser un número entero`);
-            } else if (edadNum <= 0 || edadNum >= 99) {
-              newErrors.push(`Participante ${idx}: La edad debe ser mayor a 0 y menor a 99`);
-            }
+            if (!Number.isFinite(edadNum) || !Number.isInteger(edadNum)) newErrors.push(`Participante ${idx}: La edad debe ser un número entero`);
+            else if (edadNum <= 0 || edadNum >= 99) newErrors.push(`Participante ${idx}: La edad debe ser mayor a 0 y menor a 99`);
           }
 
-          // Talla si aplica
-          if (selectedActivity?.requiereVestimenta && !p.clothingSize) {
-            newErrors.push(`Participante ${idx}: La talla de vestimenta es requerida para esta actividad`);
-          }
+          if (selectedActivity?.requiereVestimenta && !p.clothingSize) newErrors.push(`Participante ${idx}: La talla de vestimenta es requerida`);
+        });
 
-          if (!p.name.trim()) newErrors.push(`Participante ${i + 1}: El nombre es requerido`)
-          if (!p.dni.trim()) newErrors.push(`Participante ${i + 1}: El DNI es requerido`)
-          if (!p.age.trim()) newErrors.push(`Participante ${i + 1}: La edad es requerida`)
-          if (selectedActivity?.requiereVestimenta && !p.clothingSize) newErrors.push(`Participante ${i + 1}: La talla de vestimenta es requerida para esta actividad`)
-        })
+        // validar email de contacto (único)
+        const contactEmailTrim = contactEmail.trim();
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!contactEmailTrim) newErrors.push("El email de contacto es requerido");
+        else if (!emailRegex.test(contactEmailTrim)) newErrors.push("El email de contacto no tiene un formato válido");
+
         break
       case "terms":
         if (!termsAccepted) newErrors.push("Debe aceptar los términos y condiciones para continuar")
@@ -262,12 +242,11 @@ export function ActivityRegistrationForm() {
   }
 
   const handleSubmit = async () => {
-    // Validar términos y pasos
     if (submitting) return;
     if (!validateStep("terms")) return;
     if (!selectedActivity || !selectedTimeSlot || !selectedDate) return;
 
-    // Construir visitantes (validar edades como número)
+    // Construir visitantes (SIN email por visitante)
     const visitantesPayload = participants.map((p) => {
       const edadNum = Number(p.age);
       return {
@@ -275,13 +254,11 @@ export function ActivityRegistrationForm() {
         dni: p.dni.trim(),
         edad: Number.isFinite(edadNum) && edadNum > 0 ? edadNum : 0,
         tallaVestimenta: p.clothingSize ? p.clothingSize : null,
-        email: p.email.trim(),
       };
     });
-    const contactoEmail = visitantesPayload[0]?.email ?? null;
 
+    const contactoEmail = contactEmail.trim() || null;
 
-    // Asegurar horarioActividadId como número (usa raw.id si existe)
     const horarioIdFromRaw =
       selectedTimeSlot.raw && (selectedTimeSlot.raw as any).id
         ? Number((selectedTimeSlot.raw as any).id)
@@ -305,11 +282,10 @@ export function ActivityRegistrationForm() {
         return;
       }
 
-      // Éxito: el backend probablemente devuelve el InscripcionResponse; lo tenés en result.data
       setRegistrationComplete(true);
       setCurrentStep("confirmation");
 
-      // Opcional: refrescar horarios para actualizar cupos disponibles
+      // refrescar horarios opcional
       try {
         if (selectedActivity && selectedDate) {
           const horarios = await fetchHorarios(selectedActivity.id, selectedDate);
@@ -334,8 +310,6 @@ export function ActivityRegistrationForm() {
     }
   };
 
-
-
   const handleReset = () => {
     setCurrentStep("activity")
     setSelectedActivity(null)
@@ -343,7 +317,8 @@ export function ActivityRegistrationForm() {
     setSelectedTimeSlot(null)
     setTimeSlots([])
     setParticipantCount(1)
-    setParticipants([{ name: "", dni: "", age: "", clothingSize: "", email: "" }])
+    setParticipants([{ name: "", dni: "", age: "", clothingSize: "" }])
+    setContactEmail("")
     setTermsAccepted(false)
     setErrors([])
     setRegistrationComplete(false)
@@ -430,6 +405,8 @@ export function ActivityRegistrationForm() {
             onCountChange={handleParticipantCountChange}
             selectedTimeSlot={selectedTimeSlot}
             selectedActivity={selectedActivity}
+            contactEmail={contactEmail}
+            onContactEmailChange={setContactEmail}
           />
         )}
 
@@ -448,23 +425,37 @@ export function ActivityRegistrationForm() {
 
         {currentStep !== "confirmation" && (
           <div style={{ marginTop: 24, display: "flex", justifyContent: "space-between", gap: 12 }} className="form-actions">
-            <button className="btn btn-secondary" onClick={handleBack} disabled={currentStep === "activity"}>
+            <button className="btn btn-secondary" onClick={handleBack} disabled={currentStep === "activity" || submitting}>
               Anterior
             </button>
 
             {currentStep !== "terms" ? (
-              <button className="btn btn-primary" onClick={handleNext}>
+              <button className="btn btn-primary" onClick={handleNext} disabled={submitting}>
                 Siguiente
               </button>
             ) : (
-              <button className="btn btn-primary" onClick={handleSubmit}>
-                Confirmar inscripción
+              <button
+                className="btn btn-primary"
+                onClick={handleSubmit}
+                disabled={submitting}
+                aria-busy={submitting}
+                aria-live="polite"
+              >
+                {submitting ? (
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                    <svg width="18" height="18" viewBox="0 0 50 50" aria-hidden="true" focusable="false" style={{ animation: "spin 1s linear infinite" }}>
+                      <circle cx="25" cy="25" r="20" fill="none" strokeWidth="5" stroke="currentColor" strokeOpacity="0.25" />
+                      <path d="M45 25a20 20 0 0 1-6.6 14.4" stroke="currentColor" strokeWidth="5" strokeLinecap="round" fill="none" />
+                    </svg>
+                    <span>Confirmando...</span>
+                  </span>
+                ) : (
+                  "Confirmar inscripción"
+                )}
               </button>
             )}
           </div>
         )}
-
-
       </main>
     </div>
   )
