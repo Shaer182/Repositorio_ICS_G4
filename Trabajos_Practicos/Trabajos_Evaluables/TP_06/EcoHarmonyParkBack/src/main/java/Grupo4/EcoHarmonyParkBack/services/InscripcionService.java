@@ -42,6 +42,10 @@ public class InscripcionService {
 
     @Transactional
     public InscripcionResponse inscribirActividad(InscripcionRequest request) {
+        if (!request.isAceptoTyC()){
+            throw new RuntimeException("Debe aceptar los términos y condiciones.");
+        }
+
         // Buscar el horario
         HorarioActividad horario = horarioRepository.findById(request.getHorarioActividadId())
                 .orElseThrow(() -> new RuntimeException("Horario no encontrado"));
