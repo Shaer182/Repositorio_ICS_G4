@@ -389,7 +389,7 @@ body {
 }
 
 .form-input-error {
-  border-color: var(--rojo);
+  border-color: var(--verde-medio);
 }
 
 .form-error {
@@ -485,4 +485,39 @@ body {
 
 .text-center {
   text-align: center;
+}
+
+
+
+
+
+
+
+/* cada tarjeta de participante */
+.participant-card {
+  border: 2px solid rgba(61, 163, 93, 0.18); /* sutil borde verde por defecto */
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+
+/* inputs marcados como error (ya la usabas) */
+.form-input-error {
+  border-color: var(--rojo);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(217, 83, 79, 0.06);
+}
+
+/* texto de ayuda/error bajo un campo */
+.field-error-text {
+  color: var(--rojo);
+  font-size: 0.85rem;
+  margin-top: 6px;
+}
+
+/* estilos para group-error (email contacto) */
+.form-group.group-error .form-input {
+  border-color: var(--rojo);
 }

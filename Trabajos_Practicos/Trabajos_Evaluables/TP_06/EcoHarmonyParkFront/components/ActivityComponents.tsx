@@ -144,6 +144,8 @@ export function ParticipantsForm({
   selectedActivity,
   contactEmail,
   onContactEmailChange,
+  participantFieldErrors,
+  contactEmailError,
 }: {
   participants: Participant[]
   onChange: (index: number, field: keyof Participant, value: string) => void
@@ -152,9 +154,11 @@ export function ParticipantsForm({
   selectedActivity: ActivityFromApi | null
   contactEmail: string
   onContactEmailChange: (v: string) => void
+  participantFieldErrors: Record<number, Record<string, string>>
+  contactEmailError: string | null
 }) {
   return (
-    <div>
+    <div className={`participants-form ${contactEmailError ? "error" : "valid"}`}>
       <h3 className="section-title">Participantes</h3>
       <p className="section-description">Cupos disponibles: {selectedTimeSlot?.availableSpots ?? "-"}</p>
 
@@ -168,54 +172,85 @@ export function ParticipantsForm({
       </div>
 
       {/* Email de contacto único */}
-      <div style={{ marginTop: 12 }} className="form-group">
-        <label className="form-label">Email de contacto </label>
+      <div style={{ marginTop: 12 }} className={`form-group ${contactEmailError ? "group-error" : ""}`}>
+        <label className="form-label">Email de contacto (recibirá la confirmación)</label>
         <input
           type="email"
-          className={`form-input ${!contactEmail.trim() ? "form-input-error" : ""}`}
+          className={`form-input ${contactEmailError ? "form-input-error" : ""}`}
           value={contactEmail}
           onChange={(e) => onContactEmailChange(e.target.value)}
           placeholder="ejemplo@correo.com"
+          aria-invalid={!!contactEmailError}
         />
       </div>
 
       <div style={{ marginTop: 18 }} className="form">
-        {participants.map((participant, index) => (
-          <div key={index} className="activity-card">
-            <div style={{ marginBottom: 8, fontWeight: 700 }}>Participante {index + 1}</div>
+        {participants.map((participant, index) => {
+          const pErrors = participantFieldErrors?.[index] || {}
+          const hasErrors = Object.keys(pErrors).length > 0
+          return (
+            <div key={index} className={`activity-card participant-card ${hasErrors ? "error" : "valid"}`}>
+              <div style={{ marginBottom: 8, fontWeight: 700 }}>Participante {index + 1}</div>
 
-            <div className="form-group">
-              <label className="form-label">Nombre completo</label>
-              <input className={`form-input ${!participant.name.trim() ? "form-input-error" : ""}`} value={participant.name} onChange={(e) => onChange(index, "name", e.target.value)} placeholder="Ej: Juan Pérez" />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">DNI</label>
-              <input className={`form-input ${!participant.dni.trim() ? "form-input-error" : ""}`} value={participant.dni} onChange={(e) => onChange(index, "dni", e.target.value)} placeholder="Ej: 12345678" />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Edad</label>
-              <input type="number" className={`form-input ${!participant.age.trim() ? "form-input-error" : ""}`} value={participant.age} onChange={(e) => onChange(index, "age", e.target.value)} placeholder="Ej: 25" />
-            </div>
-
-            {selectedActivity?.requiereVestimenta && (
               <div className="form-group">
-                <label className="form-label">Talla de vestimenta</label>
-                <select className="form-select" value={participant.clothingSize} onChange={(e) => onChange(index, "clothingSize", e.target.value)}>
-                  <option value="">Seleccione talla</option>
-                  {clothingSizes.map((s) => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
+                <label className="form-label">Nombre completo</label>
+                <input
+                  className={`form-input ${pErrors.name ? "form-input-error" : ""}`}
+                  value={participant.name}
+                  onChange={(e) => onChange(index, "name", e.target.value)}
+                  placeholder="Ej: Juan Pérez"
+                  aria-invalid={!!pErrors.name}
+                />
               </div>
-            )}
-          </div>
-        ))}
+
+              <div className="form-group">
+                <label className="form-label">DNI</label>
+                <input
+                  className={`form-input ${pErrors.dni ? "form-input-error" : ""}`}
+                  value={participant.dni}
+                  onChange={(e) => onChange(index, "dni", e.target.value)}
+                  placeholder="Ej: 12345678"
+                  aria-invalid={!!pErrors.dni}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Edad</label>
+                <input
+                  type="number"
+                  className={`form-input ${pErrors.age ? "form-input-error" : ""}`}
+                  value={participant.age}
+                  onChange={(e) => onChange(index, "age", e.target.value)}
+                  placeholder="Ej: 25"
+                  aria-invalid={!!pErrors.age}
+                />
+              </div>
+
+              {selectedActivity?.requiereVestimenta && (
+                <div className="form-group">
+                  <label className="form-label">Talla de vestimenta</label>
+                  <select
+                    className={`form-select ${pErrors.clothingSize ? "form-input-error" : ""}`}
+                    value={participant.clothingSize}
+                    onChange={(e) => onChange(index, "clothingSize", e.target.value)}
+                    aria-invalid={!!pErrors.clothingSize}
+                  >
+                    <option value="">Seleccione talla</option>
+                    {clothingSizes.map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+          )
+        })}
       </div>
     </div>
   )
 }
+
+
 
 
 // ---------------------------

@@ -31,6 +31,8 @@ import { registerForActivity } from "../lib/api"
 
 
 export function ActivityRegistrationForm() {
+  const [contactEmailError, setContactEmailError] = useState<string | null>(null)
+  const [participantFieldErrors, setParticipantFieldErrors] = useState<Record<number, Record<string, string>>>({})
   const [currentStep, setCurrentStep] = useState<Step>("activity")
   const [submitting, setSubmitting] = useState(false)
   const [activities, setActivities] = useState<ActivityFromApi[]>([])
@@ -102,16 +104,18 @@ export function ActivityRegistrationForm() {
     setParticipantCount(1)
     setParticipants([{ name: "", dni: "", age: "", clothingSize: "" }])
     setContactEmail("")
+    setParticipantFieldErrors({})
+    setContactEmailError(null)
   }
 
   const handleDateChange = async (dateValue: string) => {
     if (!dateValue) return
 
     const today = new Date();
-    today.setHours(0,0,0,0);
+    today.setHours(0, 0, 0, 0);
 
     const [y, m, d] = dateValue.split('-');
-    const selectedDateObj = new Date(Number(y), Number(m) -1, Number(d));
+    const selectedDateObj = new Date(Number(y), Number(m) - 1, Number(d));
 
     if (selectedDateObj < today) {
       setErrors(["No puede seleccionar una fecha anterior a hoy"])
@@ -158,7 +162,7 @@ export function ActivityRegistrationForm() {
     }
 
     setParticipantCount(count)
-    const newParticipants = Array.from({ length: count }, (_, i) => participants[i] || { name: "", dni: "", age: "", clothingSize: ""})
+    const newParticipants = Array.from({ length: count }, (_, i) => participants[i] || { name: "", dni: "", age: "", clothingSize: "" })
     setParticipants(newParticipants)
     setErrors([])
   }
@@ -181,11 +185,15 @@ export function ActivityRegistrationForm() {
         if (!selectedTimeSlot) newErrors.push("Debe seleccionar un horario")
         else if (!selectedTimeSlot.isAvailable) newErrors.push("El horario seleccionado no está disponible")
         break
-      case "participants":
+      case "participants": {
         if (participantCount < 1) newErrors.push("Debe haber al menos un participante")
         if (selectedTimeSlot && participantCount > selectedTimeSlot.availableSpots) newErrors.push(`Solo hay ${selectedTimeSlot.availableSpots} cupos disponibles`)
+
         const nameRegex = /^[\p{L} '\-]+$/u;
         const dniRegex = /^\d{8}$/;
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        const fieldErrors: Record<number, Record<string, string>> = {}
 
         participants.forEach((p, i) => {
           const idx = i + 1;
@@ -193,31 +201,83 @@ export function ActivityRegistrationForm() {
           const dni = (p.dni || "").trim();
           const edadStr = (p.age || "").trim();
 
-          if (!nombre) newErrors.push(`Participante ${idx}: El nombre es requerido`);
-          else if (!nameRegex.test(nombre)) newErrors.push(`Participante ${idx}: El nombre debe contener solo letras, espacios, guiones o apóstrofes`);
+          // inicializar objeto de errores del participante
+          fieldErrors[i] = {};
 
-          if (!dni) newErrors.push(`Participante ${idx}: El DNI es requerido`);
-          else if (!dniRegex.test(dni)) newErrors.push(`Participante ${idx}: El DNI debe tener exactamente 8 dígitos`);
-
-          if (!edadStr) newErrors.push(`Participante ${idx}: La edad es requerida`);
-          else {
-            const edadNum = Number(edadStr);
-            if (!Number.isFinite(edadNum) || !Number.isInteger(edadNum)) newErrors.push(`Participante ${idx}: La edad debe ser un número entero`);
-            else if (edadNum <= 0 || edadNum >= 99) newErrors.push(`Participante ${idx}: La edad debe ser mayor a 0 y menor a 99`);
+          // Nombre
+          if (!nombre) {
+            const msg = `Participante ${idx}: El nombre es requerido`
+            newErrors.push(msg)
+            fieldErrors[i].name = msg
+          } else if (!nameRegex.test(nombre)) {
+            const msg = `Participante ${idx}: El nombre debe contener solo letras, espacios, guiones o apóstrofes`
+            newErrors.push(msg)
+            fieldErrors[i].name = msg
           }
 
-          if (selectedActivity?.requiereVestimenta && !p.clothingSize) newErrors.push(`Participante ${idx}: La talla de vestimenta es requerida`);
-        });
+          // DNI
+          if (!dni) {
+            const msg = `Participante ${idx}: El DNI es requerido`
+            newErrors.push(msg)
+            fieldErrors[i].dni = msg
+          } else if (!dniRegex.test(dni)) {
+            const msg = `Participante ${idx}: El DNI debe tener exactamente 8 dígitos`
+            newErrors.push(msg)
+            fieldErrors[i].dni = msg
+          }
+
+          // Edad
+          if (!edadStr) {
+            const msg = `Participante ${idx}: La edad es requerida`
+            newErrors.push(msg)
+            fieldErrors[i].age = msg
+          } else {
+            const edadNum = Number(edadStr);
+            if (!Number.isFinite(edadNum) || !Number.isInteger(edadNum)) {
+              const msg = `Participante ${idx}: La edad debe ser un número entero`
+              newErrors.push(msg)
+              fieldErrors[i].age = msg
+            } else if (edadNum <= 0 || edadNum >= 99) {
+              const msg = `Participante ${idx}: La edad debe ser mayor a 0 y menor a 99`
+              newErrors.push(msg)
+              fieldErrors[i].age = msg
+            }
+          }
+
+          // Talla si aplica
+          if (selectedActivity?.requiereVestimenta && !p.clothingSize) {
+            const msg = `Participante ${idx}: La talla de vestimenta es requerida para esta actividad`
+            newErrors.push(msg)
+            fieldErrors[i].clothingSize = msg
+          }
+
+          // Si el participante no tiene errores, borrar objeto vacío para evitar falsos positivos
+          if (Object.keys(fieldErrors[i]).length === 0) {
+            delete fieldErrors[i]
+          }
+        })
 
         // validar email de contacto (único)
-        const contactEmailTrim = contactEmail.trim();
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!contactEmailTrim) newErrors.push("El email de contacto es requerido");
-        else if (!emailRegex.test(contactEmailTrim)) newErrors.push("El email de contacto no tiene un formato válido");
+        const contactTrim = contactEmail.trim();
+        if (!contactTrim) {
+          const msg = "El email de contacto es requerido"
+          newErrors.push(msg)
+          setContactEmailError(msg)
+        } else if (!emailRegex.test(contactTrim)) {
+          const msg = "El email de contacto no tiene un formato válido"
+          newErrors.push(msg)
+          setContactEmailError(msg)
+        } else {
+          setContactEmailError(null)
+        }
 
+        setParticipantFieldErrors(fieldErrors)
         break
+      }
       case "terms":
         if (!termsAccepted) newErrors.push("Debe aceptar los términos y condiciones para continuar")
+        break
+      default:
         break
     }
 
@@ -322,6 +382,9 @@ export function ActivityRegistrationForm() {
     setTermsAccepted(false)
     setErrors([])
     setRegistrationComplete(false)
+    setParticipantFieldErrors({})
+    setContactEmailError(null)
+
   }
 
   return (
@@ -407,6 +470,8 @@ export function ActivityRegistrationForm() {
             selectedActivity={selectedActivity}
             contactEmail={contactEmail}
             onContactEmailChange={setContactEmail}
+            participantFieldErrors={participantFieldErrors}
+            contactEmailError={contactEmailError}
           />
         )}
 
