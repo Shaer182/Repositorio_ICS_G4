@@ -96,6 +96,18 @@ public class InscripcionService {
                 throw new RuntimeException("El visitante con DNI " + vr.getDni()
                         + " ya está inscripto en este horario.");
             }
+
+            // Validar conflicto de horarios (otra actividad a la misma hora)
+            if (inscripcionRepository.existsConflictingScheduleForVisitor(
+                    vr.getDni(),
+                    horario.getFecha(),
+                    horario.getHoraInicio(),
+                    horario.getHoraFin(),
+                    horario.getId()
+            )) {
+                throw new RuntimeException("El visitante con DNI " + vr.getDni()
+                        + " ya está inscripto en otra actividad que se solapa con este horario.");
+            }
         }
 
         // AHORA SÍ, descontar los cupos después de todas las validaciones

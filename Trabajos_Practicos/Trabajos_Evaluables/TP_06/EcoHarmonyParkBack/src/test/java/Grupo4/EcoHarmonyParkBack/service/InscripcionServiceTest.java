@@ -716,4 +716,114 @@ class InscripcionServiceTest {
         assertTrue(exception.getMessage().contains("No se encontró la inscripción"));
         assertTrue(exception.getMessage().contains("999"));
     }
+
+    // ==================== CASOS DE PRUEBA: CONFLICTO DE HORARIO ====================
+
+    @Test
+    @DisplayName("Should throw exception when visitor is registered in another activity with overlapping schedule")
+    void shouldThrowExceptionWhenVisitorHasConflictingSchedule() {
+        // Arrange
+        HorarioActividad nuevoHorario = HorarioActividad.builder()
+                .id(10L)
+                .actividad(actividadSafari)
+                .fecha(LocalDate.now().plusDays(2))
+                .horaInicio(LocalTime.of(10, 0))
+                .horaFin(LocalTime.of(12, 0))
+                .cuposDisponibles(10)
+                .build();
+
+        VisitanteRequest visitante = VisitanteRequest.builder()
+                .nombre("Juan Perez")
+                .dni("12345678")
+                .edad(30)
+                .build();
+
+        InscripcionRequest request = InscripcionRequest.builder()
+                .horarioActividadId(10L)
+                .cantidadPersonas(1)
+                .visitantes(List.of(visitante))
+                .email("juan@example.com")
+                .aceptoTyC(true)
+                .build();
+
+        when(horarioRepository.findById(10L)).thenReturn(Optional.of(nuevoHorario));
+        when(inscripcionRepository.existsByHorarioAndVisitanteDni(10L, "12345678")).thenReturn(false);
+        // 👇 Simula conflicto con otra actividad en la misma fecha/hora
+        when(inscripcionRepository.existsConflictingScheduleForVisitor(
+                "12345678",
+                nuevoHorario.getFecha(),
+                nuevoHorario.getHoraInicio(),
+                nuevoHorario.getHoraFin(),
+                nuevoHorario.getId()
+        )).thenReturn(true);
+
+        // Act & Assert
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+            inscripcionService.inscribirActividad(request);
+        });
+
+        assertTrue(exception.getMessage().contains("ya está inscripto en otra actividad"));
+        verify(inscripcionRepository, never()).save(any(Inscripcion.class));
+    }
+
+    @Test
+    @DisplayName("Should register successfully when there is no conflicting schedule")
+    void shouldRegisterSuccessfullyWhenNoScheduleConflict() {
+        // Arrange
+        HorarioActividad nuevoHorario = HorarioActividad.builder()
+                .id(11L)
+                .actividad(actividadSafari)
+                .fecha(LocalDate.now().plusDays(2))
+                .horaInicio(LocalTime.of(10, 0))
+                .horaFin(LocalTime.of(12, 0))
+                .cuposDisponibles(10)
+                .build();
+
+        VisitanteRequest visitante = VisitanteRequest.builder()
+                .nombre("Maria Gomez")
+                .dni("87654321")
+                .edad(25)
+                .build();
+
+        InscripcionRequest request = InscripcionRequest.builder()
+                .horarioActividadId(11L)
+                .cantidadPersonas(1)
+                .visitantes(List.of(visitante))
+                .email("maria@example.com")
+                .aceptoTyC(true)
+                .build();
+
+        Visitante visitanteEntity = Visitante.builder()
+                .id(1L)
+                .nombre("Maria Gomez")
+                .dni("87654321")
+                .edad(25)
+                .build();
+
+        when(horarioRepository.findById(11L)).thenReturn(Optional.of(nuevoHorario));
+        when(inscripcionRepository.existsByHorarioAndVisitanteDni(11L, "87654321")).thenReturn(false);
+        when(inscripcionRepository.existsConflictingScheduleForVisitor(
+                "87654321",
+                nuevoHorario.getFecha(),
+                nuevoHorario.getHoraInicio(),
+                nuevoHorario.getHoraFin(),
+                nuevoHorario.getId()
+        )).thenReturn(false);
+        when(visitanteService.crearVisitante(any(VisitanteRequest.class))).thenReturn(visitanteEntity);
+        when(horarioRepository.save(any(HorarioActividad.class))).thenReturn(nuevoHorario);
+        when(inscripcionRepository.save(any(Inscripcion.class))).thenAnswer(invocation -> {
+            Inscripcion inscripcion = invocation.getArgument(0);
+            inscripcion.setId(1L);
+            return inscripcion;
+        });
+
+        // Act
+        InscripcionResponse result = inscripcionService.inscribirActividad(request);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals("maria@example.com", result.getEmail());
+        assertEquals(1, result.getCantidadPersonas());
+        verify(inscripcionRepository, times(1)).save(any(Inscripcion.class));
+    }
 }

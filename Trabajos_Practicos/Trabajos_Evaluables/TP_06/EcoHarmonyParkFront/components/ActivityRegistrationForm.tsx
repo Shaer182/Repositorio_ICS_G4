@@ -269,6 +269,7 @@ export function ActivityRegistrationForm() {
       horarioActividadId: horarioIdFromRaw,
       cantidadPersonas: visitantesPayload.length,
       email: contactoEmail,
+      aceptoTyC: true
     };
 
     setSubmitting(true);
