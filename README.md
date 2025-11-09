@@ -48,7 +48,7 @@ Fechas:
 | `<TEMA>`                  | Nombre que indica el tema abordado en la presentación .              |
 | `<APELLIDO_INTEGRANTE>`   | Apellido del integrante que ha realizado el parcial o recuperatorio. |
 | `<NOMBRE_TIG>`            | Nombre del Trabajo de Investigación Grupal.                          |
-| `<ext_tp>`                | Extensión del trabajo práctico. Los valores permitidos son PDF y DOCX. |
+| `<ext_tp>`                | Extensión del trabajo práctico. Los valores permitidos son PDF, DOCX y XLSX. |
 
 
 
